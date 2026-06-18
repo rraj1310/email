@@ -4,9 +4,9 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Workflow, Settings, Play, Pause, Trash2, ArrowRight, Clock, Mail, CheckCircle, Loader2, Cake, Sparkles } from "lucide-react"
+import { Plus, Workflow, Settings, Play, Pause, Trash2, ArrowRight, Clock, Mail, CheckCircle, Loader2, Cake, Sparkles, Upload } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
-import { updateBirthdaySettings, triggerBirthdayCheckNow, saveSimpleBirthdayConfig } from "@/app/actions/birthday"
+import { updateBirthdaySettings, triggerBirthdayCheckNow, saveSimpleBirthdayMessage } from "@/app/actions/birthday"
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,11 @@ interface AutomationsClientProps {
     birthdayAutomationEnabled: boolean
     birthdayEmailTime: string
     todayBirthdays: Array<{ id: string; name: string; email: string }>
+    templateConfig?: {
+      subject: string
+      bodyText: string
+      bannerUrl: string
+    }
   }
   campaigns: any[]
 }
@@ -49,37 +54,18 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
   const [isUpdatingBday, setIsUpdatingBday] = React.useState(false)
   const [isTriggeringNow, setIsTriggeringNow] = React.useState(false)
 
-  // Find active birthday workflow template ID
-  const birthdayWorkflows = workflows.filter((w) => w.triggerType === "BIRTHDAY")
-  const activeBdayWorkflow = birthdayWorkflows[0]
-  
-  let initialCampaignId = ""
-  if (activeBdayWorkflow) {
-    const actions = Array.isArray(activeBdayWorkflow.actions) ? activeBdayWorkflow.actions : []
-    const action = actions.find((a: any) => a.actionType === "SEND_EMAIL")
-    if (action?.campaignId) {
-      initialCampaignId = action.campaignId
-    } else {
-      const nodes = Array.isArray(activeBdayWorkflow.nodes) ? activeBdayWorkflow.nodes : []
-      const node = nodes.find((n: any) => n.type === "actionNode" && n.data?.campaignId)
-      if (node?.data?.campaignId) {
-        initialCampaignId = node.data.campaignId
-      }
-    }
-  }
-  
-  if (!initialCampaignId && campaigns && campaigns.length > 0) {
-    initialCampaignId = campaigns[0].id
-  }
-
-  const [selectedBdayCampaignId, setSelectedBdayCampaignId] = React.useState(initialCampaignId)
+  // Simplified custom template states
+  const [bdaySubject, setBdaySubject] = React.useState(birthdaySettings.templateConfig?.subject || "Happy Birthday! 🎂")
+  const [bdayBody, setBdayBody] = React.useState(birthdaySettings.templateConfig?.bodyText || "Wishing you a wonderful year ahead filled with happiness and success!")
+  const [bdayBannerUrl, setBdayBannerUrl] = React.useState(birthdaySettings.templateConfig?.bannerUrl || "")
+  const [isUploadingBanner, setIsUploadingBanner] = React.useState(false)
   const [isSavingConfig, setIsSavingConfig] = React.useState(false)
 
   const handleToggleBday = async (checked: boolean) => {
     setIsUpdatingBday(true)
     try {
       setBdayEnabled(checked)
-      const res = await saveSimpleBirthdayConfig(selectedBdayCampaignId || "", checked, bdayTime)
+      const res = await saveSimpleBirthdayMessage(bdaySubject, bdayBody, bdayBannerUrl || null, checked, bdayTime)
       if (res.success) {
         toast.success(`Birthday emails ${checked ? "activated" : "paused"}.`)
         if (res.data) {
@@ -101,15 +87,15 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
   }
 
   const handleSaveSimpleConfig = async () => {
-    if (!selectedBdayCampaignId) {
-      toast.error("Please select an email template first.")
+    if (!bdaySubject.trim() || !bdayBody.trim()) {
+      toast.error("Subject and email body are required.")
       return
     }
     setIsSavingConfig(true)
     try {
-      const res = await saveSimpleBirthdayConfig(selectedBdayCampaignId, bdayEnabled, bdayTime)
+      const res = await saveSimpleBirthdayMessage(bdaySubject, bdayBody, bdayBannerUrl || null, bdayEnabled, bdayTime)
       if (res.success && res.data) {
-        toast.success("Birthday settings & flow updated successfully!")
+        toast.success("Birthday Settings & Template updated successfully!")
         const updatedRule = res.data
         setWorkflows(prev => prev.some(w => w.id === updatedRule.id) ? prev.map(w => w.id === updatedRule.id ? updatedRule : w) : [updatedRule, ...prev])
       } else {
@@ -121,6 +107,39 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     } finally {
       setIsSavingConfig(false)
     }
+  }
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingBanner(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await fetch("/api/media/upload", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (data.success && data.url) {
+        setBdayBannerUrl(data.url)
+        toast.success("Banner image uploaded successfully!")
+      } else {
+        toast.error(data.error || "Upload failed")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Banner upload failed.")
+    } finally {
+      setIsUploadingBanner(false)
+    }
+  }
+
+  const handleRemoveBanner = () => {
+    setBdayBannerUrl("")
+    toast.success("Banner removed.")
   }
 
   const handleTriggerNow = async () => {
@@ -310,61 +329,100 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
         </CardHeader>
         
         <CardContent className="pt-6 grid gap-6 md:grid-cols-3">
-          {/* Section 1: Settings Form (Simplified UI for Non-Technical Client) */}
+          {/* Section 1: Setup Birthday Email Form (Plain text + upload image) */}
           <div className="space-y-4 border-r border-amber-100/50 dark:border-amber-900/20 pr-4 last:border-0 md:col-span-1">
             <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
               <Settings className="h-4 w-4" /> Setup Birthday Email
             </h4>
 
-            {/* Email Template Dropdown */}
-            <div className="grid gap-2">
-              <Label htmlFor="bdayCampaignSelect" className="text-xs font-semibold text-foreground">
-                Email Template to Send
+            {/* Email Subject Input */}
+            <div className="grid gap-1.5">
+              <Label htmlFor="bdaySubjectInput" className="text-xs font-semibold text-foreground">
+                Email Subject Line
               </Label>
-              {campaigns && campaigns.length > 0 ? (
-                <select
-                  id="bdayCampaignSelect"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  value={selectedBdayCampaignId}
-                  onChange={(e) => setSelectedBdayCampaignId(e.target.value)}
-                >
-                  {campaigns.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.subject ? `(${c.subject})` : ""}
-                    </option>
-                  ))}
-                </select>
+              <Input
+                id="bdaySubjectInput"
+                placeholder="Happy Birthday! 🎂"
+                value={bdaySubject}
+                onChange={(e) => setBdaySubject(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Email Banner Upload */}
+            <div className="grid gap-1.5">
+              <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Email Banner Image</span>
+                {bdayBannerUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveBanner}
+                    className="text-[10px] text-destructive hover:underline font-bold"
+                  >
+                    Remove banner
+                  </button>
+                )}
+              </Label>
+
+              {bdayBannerUrl ? (
+                <div className="relative border rounded-lg overflow-hidden bg-muted/25 flex flex-col gap-1.5 p-1">
+                  <img
+                    src={bdayBannerUrl}
+                    alt="Uploaded Banner"
+                    className="w-full h-20 object-cover rounded-md"
+                  />
+                  <div className="text-[9px] text-muted-foreground truncate px-1 text-center">
+                    Image uploaded successfully
+                  </div>
+                </div>
               ) : (
-                <div className="text-[11px] text-muted-foreground p-3 rounded-md bg-amber-500/5 border border-amber-200/40">
-                  No templates found.{" "}
-                  <Link href="/campaigns/new" className="text-amber-600 hover:underline font-bold">
-                    Create a campaign template first
-                  </Link>
+                <div className="border border-dashed border-input rounded-lg p-3 text-center bg-background/50 hover:bg-amber-500/5 transition-colors cursor-pointer relative group">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerUpload}
+                    disabled={isUploadingBanner}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                    {isUploadingBanner ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                        <span className="text-[10px]">Uploading to cloud...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 group-hover:text-amber-500 transition-colors" />
+                        <span className="text-[10px] font-medium">Click to upload banner image</span>
+                        <span className="text-[9px] opacity-75">PNG, JPG or WebP (Cloudinary hosted)</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Edit template copy button */}
-            {selectedBdayCampaignId && (
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(`/campaigns/${selectedBdayCampaignId}/editor`, "_blank")}
-                  className="h-9 w-full text-xs bg-white hover:bg-amber-50 border-amber-200 text-amber-800 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-amber-400 font-semibold cursor-pointer"
-                >
-                  <Mail className="mr-1.5 h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                  Write / Edit Email Message Content 📝
-                </Button>
-                <p className="text-[10px] text-muted-foreground mt-1 text-center">
-                  Opens the visual email editor to write the birthday copy.
-                </p>
-              </div>
-            )}
+            {/* Email Message Text Box */}
+            <div className="grid gap-1.5">
+              <Label htmlFor="bdayBodyInput" className="text-xs font-semibold text-foreground">
+                Email Message Text
+              </Label>
+              <textarea
+                id="bdayBodyInput"
+                rows={4}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring resize-none font-sans"
+                placeholder="Type your warm birthday greeting here..."
+                value={bdayBody}
+                onChange={(e) => setBdayBody(e.target.value)}
+                required
+              />
+              <p className="text-[9px] text-muted-foreground leading-normal">
+                You can use personalization placeholders like <code className="bg-muted/80 px-1 rounded">{"{{firstName}}"}</code> to print the client's name automatically.
+              </p>
+            </div>
 
-            {/* Time Picker */}
-            <div className="grid gap-2">
+            {/* Daily Send Time */}
+            <div className="grid gap-1.5">
               <Label htmlFor="bdayTime" className="text-xs font-semibold text-foreground">
                 Daily Send Time (IST)
               </Label>
@@ -385,7 +443,7 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
               <Button
                 type="button"
                 onClick={handleSaveSimpleConfig}
-                disabled={isSavingConfig || !selectedBdayCampaignId}
+                disabled={isSavingConfig || isUploadingBanner}
                 className="h-10 w-full text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-bold shadow-md cursor-pointer"
               >
                 {isSavingConfig ? (
@@ -394,13 +452,13 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Save Birthday Settings
+                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Save Birthday settings
                   </>
                 )}
               </Button>
             </div>
 
-            {/* Separator / Trigger check now */}
+            {/* Trigger Manual Check button */}
             <div className="pt-2 border-t border-amber-100/60 dark:border-amber-900/20">
               <Button 
                 variant="outline" 

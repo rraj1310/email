@@ -176,12 +176,44 @@ export async function getBirthdaySettings() {
       email: c.email
     }))
 
+    // Load active Birthday template fields
+    const campaign = await prisma.campaign.findFirst({
+      where: {
+        organizationId,
+        name: "Birthday Greeting Template"
+      }
+    })
+
+    let templateConfig = {
+      subject: "Happy Birthday! 🎂",
+      bodyText: "Wishing you a wonderful year ahead filled with happiness and success!",
+      bannerUrl: ""
+    }
+
+    if (campaign && campaign.designContent) {
+      try {
+        const parsed = typeof campaign.designContent === "string"
+          ? JSON.parse(campaign.designContent)
+          : campaign.designContent
+        if (parsed && typeof parsed === "object") {
+          templateConfig = {
+            subject: parsed.subject || templateConfig.subject,
+            bodyText: parsed.bodyText || templateConfig.bodyText,
+            bannerUrl: parsed.bannerUrl || ""
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse campaign designContent:", e)
+      }
+    }
+
     return {
       success: true,
       data: {
         birthdayAutomationEnabled: org.birthdayAutomationEnabled,
         birthdayEmailTime: org.birthdayEmailTime,
-        todayBirthdays
+        todayBirthdays,
+        templateConfig
       }
     }
   } catch (error: any) {
@@ -331,6 +363,154 @@ export async function saveSimpleBirthdayConfig(campaignId: string, enabled: bool
   } catch (error: any) {
     console.error("Failed to save simple birthday config:", error)
     return { success: false, error: error.message || "Failed to save configuration" }
+  }
+}
+
+function buildBirthdayEmailHtml(subject: string, bodyText: string, bannerUrl: string | null) {
+  const formattedBody = bodyText.replace(/\n/g, '<br />')
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${subject}</title>
+    <style>
+      body {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+      }
+      .banner-container {
+        width: 100%;
+        text-align: center;
+        background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+      }
+      .banner-img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .title {
+        font-size: 26px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .message {
+        font-size: 16px;
+        line-height: 1.8;
+        color: #334155;
+        margin-bottom: 30px;
+      }
+      .footer {
+        padding: 25px;
+        background-color: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+        font-size: 12px;
+        color: #64748b;
+      }
+      .tag-note {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 15px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      \${bannerUrl ? \`
+      <div class="banner-container">
+        <img class="banner-img" src="\${bannerUrl}" alt="Birthday Celebration" />
+      </div>
+      \` : \`
+      <div style="height: 120px; background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%); display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 42px;">🎂</span>
+      </div>
+      \`}
+      <div class="content">
+        <h1 class="title">Happy Birthday!</h1>
+        <div class="message">
+          \${formattedBody}
+        </div>
+        <div class="tag-note">
+          Sent automatically on your special day.
+        </div>
+      </div>
+      <div class="footer">
+        © \${new Date().getFullYear()} Workspace Automations. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>`
+}
+
+export async function saveSimpleBirthdayMessage(
+  subject: string,
+  bodyText: string,
+  bannerUrl: string | null,
+  enabled: boolean,
+  time: string
+) {
+  try {
+    const { organizationId } = await enforceWorkspaceEditor()
+
+    // 1. Create or update campaign
+    let campaign = await prisma.campaign.findFirst({
+      where: {
+        organizationId,
+        name: "Birthday Greeting Template"
+      }
+    })
+
+    const htmlContent = buildBirthdayEmailHtml(subject, bodyText, bannerUrl)
+    const designContent = { subject, bodyText, bannerUrl }
+
+    if (campaign) {
+      campaign = await prisma.campaign.update({
+        where: { id: campaign.id },
+        data: {
+          subject,
+          htmlContent,
+          designContent: designContent as any
+        }
+      })
+    } else {
+      campaign = await prisma.campaign.create({
+        data: {
+          name: "Birthday Greeting Template",
+          subject,
+          htmlContent,
+          designContent: designContent as any,
+          status: "DRAFT",
+          organizationId
+        }
+      })
+    }
+
+    // 2. Setup the Automation Rule flow linking to this campaign
+    return await saveSimpleBirthdayConfig(campaign.id, enabled, time)
+  } catch (error: any) {
+    console.error("Failed to save simple birthday message:", error)
+    return { success: false, error: error.message || "Failed to save settings" }
   }
 }
 

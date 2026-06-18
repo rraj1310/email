@@ -260,9 +260,9 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Portfolio Base (Contacts)</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">Contacts</h2>
           <p className="text-muted-foreground text-sm">
-            Manage your subscriber portfolio, organize filter segments, and customize tags.
+            Manage your subscribers, organize them into segments, and add color-coded tags.
           </p>
         </div>
         

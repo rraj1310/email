@@ -59,50 +59,50 @@ import { useRouter } from "next/navigation"
 const data = {
   navMain: [
     {
-      title: "Trading Floor",
-      description: "Overview stats & activity feed",
+      title: "Dashboard",
+      description: "Overview, stats & activity feed",
       url: "/",
       icon: PieChart,
     },
     {
-      title: "Portfolio Base",
-      description: "Manage & tag subscribers",
+      title: "Contacts",
+      description: "Manage & tag your subscribers",
       url: "/contacts",
       icon: Users,
     },
     {
-      title: "Trade Execution",
+      title: "Campaigns",
       description: "Draft & send bulk emails",
       url: "/campaigns",
       icon: Megaphone,
     },
     {
-      title: "Trading Bots",
-      description: "Automate birthday & welcome emails",
+      title: "Automations",
+      description: "Auto birthday & welcome emails",
       url: "/automations",
       icon: Bot,
     },
     {
-      title: "Assets Vault",
-      description: "Store newsletter media & files",
+      title: "Media Library",
+      description: "Store images & files",
       url: "/media",
       icon: ImageIcon,
     },
     {
-      title: "Risk Guard",
-      description: "Unsubscribe & blocklist filters",
+      title: "Suppression",
+      description: "Unsubscribed & blocklisted emails",
       url: "/suppression",
       icon: ShieldAlert,
     },
     {
-      title: "Yield Ledger",
-      description: "Campaign click & open charts",
+      title: "Reports",
+      description: "Open rates, clicks & charts",
       url: "/reports",
       icon: BarChart,
     },
     {
-      title: "Terminal Config",
-      description: "Workspace branding & settings",
+      title: "Settings",
+      description: "Workspace branding & config",
       url: "/settings",
       icon: Settings2,
     },
@@ -254,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {activeWorkspace?.name || orgName}
                   </span>
                   <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
-                    {activeWorkspace?.plan ? `${activeWorkspace.plan} Plan` : "Stock Market Terminal"}
+                    {activeWorkspace?.plan ? `${activeWorkspace.plan} Plan` : "Email Marketing"}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
@@ -337,7 +337,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <Link href="/settings" passHref legacyBehavior>
               <SidebarMenuButton className="hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground">
                 <LifeBuoy className="size-4" />
-                <span>Support & Settings</span>
+                <span>Help & Settings</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

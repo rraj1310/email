@@ -178,7 +178,7 @@ export function ReportsClient({ campaignData, stats }: ReportsClientProps) {
               <BarChart2 className="h-10 w-10 mb-2 opacity-50" />
               <h3 className="text-md font-semibold text-foreground">No Analytics Data</h3>
               <p className="text-[11px] max-w-sm mt-1">
-                Trigger campaign dispatch simulations to record opens and clicks.
+                Send a campaign first to start seeing open and click data here.
               </p>
             </div>
           )}

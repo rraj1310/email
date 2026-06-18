@@ -165,9 +165,9 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Trading Bots (Automations)</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">Automations</h2>
           <p className="text-muted-foreground text-sm">
-            Deploy event-driven triggers that run in the background (like welcome bots or birthday cards).
+            Set up automated emails that send based on triggers (like a birthday greeting or welcome series).
           </p>
         </div>
 
@@ -175,14 +175,14 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger render={<Button className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer" />}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Deploy Bot (Workflow)
+            New Automation
           </DialogTrigger>
           <DialogContent className="sm:max-w-[400px]">
             <form onSubmit={handleCreate}>
               <DialogHeader className="pb-3 border-b mb-4">
-                <DialogTitle className="text-lg font-bold">New Automation Bot</DialogTitle>
+                <DialogTitle className="text-lg font-bold">New Automation</DialogTitle>
                 <DialogDescription className="text-xs">
-                  Trigger automated messages automatically based on portfolio triggers.
+                  Trigger automated emails based on contact events (e.g. birthday, new signup).
                 </DialogDescription>
               </DialogHeader>
 
@@ -220,7 +220,7 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
-                  {isSaving ? "Deploying..." : "Deploy Bot"}
+                  {isSaving ? "Creating..." : "Create Automation"}
                 </Button>
               </DialogFooter>
             </form>

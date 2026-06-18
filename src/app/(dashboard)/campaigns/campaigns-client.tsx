@@ -171,9 +171,9 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Trade Execution (Campaigns)</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">Campaigns</h2>
           <p className="text-muted-foreground text-sm">
-            Draft, design, execute, and review outbound email newsletter campaigns.
+            Create, design, and send email newsletters and promotional campaigns to your contacts.
           </p>
         </div>
         
@@ -187,14 +187,14 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger render={<Button className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer" />}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Create Order (Campaign)
+              New Campaign
             </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <form onSubmit={handleCreate}>
               <DialogHeader className="pb-3 border-b mb-4">
-                <DialogTitle className="text-lg font-bold">Create Order (Campaign)</DialogTitle>
+                <DialogTitle className="text-lg font-bold">New Campaign</DialogTitle>
                 <DialogDescription className="text-xs">
-                  Fill in details to set up your campaign mail dispatch.
+                  Fill in the details below to create a new email campaign.
                 </DialogDescription>
               </DialogHeader>
 

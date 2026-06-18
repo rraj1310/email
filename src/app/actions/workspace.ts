@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { logActivity } from "./dashboard"
 import { revalidatePath } from "next/cache"
+import bcrypt from "bcryptjs"
 
 import { PLANS, PlanType } from "@/lib/plans"
 
@@ -15,6 +16,93 @@ async function getSession() {
     throw new Error("Unauthorized")
   }
   return session as any
+}
+
+// Create team member directly (owner sets email + password + role — no invite link needed)
+export async function createTeamMember(
+  name: string,
+  email: string,
+  password: string,
+  role: "ADMIN" | "EDITOR" | "ANALYST" | "VIEWER"
+) {
+  try {
+    const session = await getSession()
+    const orgId = session.user.organizationId
+
+    // Only OWNER or ADMIN can create members
+    if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+      return { success: false, error: "Only workspace Owners and Admins can add team members" }
+    }
+
+    if (password.length < 8) {
+      return { success: false, error: "Password must be at least 8 characters" }
+    }
+
+    // Seat limit check
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      include: { _count: { select: { users: true, invites: true } } }
+    })
+    if (!org) return { success: false, error: "Workspace not found" }
+
+    const limit = PLANS[(org.plan || "FREE") as PlanType]?.maxSeats || 3
+    if (org._count.users + org._count.invites >= limit) {
+      return { success: false, error: `Seat limit reached (${limit} seats on ${org.plan} plan)` }
+    }
+
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanName  = name.trim()
+
+    // Check duplicate
+    const existing = await prisma.user.findUnique({ where: { email: cleanEmail } })
+    if (existing) {
+      // If user exists but not in this org, just add membership
+      const existingMembership = await prisma.membership.findUnique({
+        where: { userId_organizationId: { userId: existing.id, organizationId: orgId } }
+      })
+      if (existingMembership) {
+        return { success: false, error: "This email is already a member of this workspace" }
+      }
+      await prisma.membership.create({
+        data: { userId: existing.id, organizationId: orgId, role }
+      })
+      await logActivity(`Added existing user ${cleanEmail} to workspace as ${role}`, "SETTINGS")
+      revalidatePath("/settings")
+      return { success: true }
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10)
+
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: cleanEmail,
+          name: cleanName,
+          passwordHash,
+          role,
+          organizationId: orgId,
+        }
+      })
+      await tx.membership.create({
+        data: { userId: user.id, organizationId: orgId, role }
+      })
+      await tx.activityLog.create({
+        data: {
+          action: `Created team member ${cleanEmail} with role ${role}`,
+          entityType: "SETTINGS",
+          entityId: user.id,
+          userId: session.user.id,
+          organizationId: orgId,
+        }
+      })
+    })
+
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    console.error("createTeamMember error:", error)
+    return { success: false, error: error.message || "Failed to create team member" }
+  }
 }
 
 // Get all workspaces user belongs to

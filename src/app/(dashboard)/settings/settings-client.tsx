@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sparkles, Save, Globe, Shield, User, Loader2, Trash2, Mail, Plus, Clock, Settings } from "lucide-react"
+import { Sparkles, Save, Globe, Shield, User, Loader2, Trash2, Mail, Plus, Clock, Settings, Eye, EyeOff } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { updateOrganizationSettings } from "@/app/actions/settings"
 import { getAiDashboardStats } from "@/app/actions/copilot"
@@ -26,6 +26,7 @@ import {
   cancelInvite,
   removeMember,
   getWorkspaceMembers,
+  createTeamMember,
 } from "@/app/actions/workspace"
 import { PlanType } from "@/lib/plans"
 import {
@@ -145,6 +146,14 @@ export function SettingsClient({ organization, users }: SettingsClientProps) {
   const [inviteRole, setInviteRole] = React.useState<"OWNER" | "ADMIN" | "EDITOR" | "ANALYST" | "VIEWER">("VIEWER")
   const [isInviting, setIsInviting] = React.useState(false)
 
+  // Direct member creation state
+  const [newMemberName, setNewMemberName]       = React.useState("")
+  const [newMemberEmail, setNewMemberEmail]     = React.useState("")
+  const [newMemberPassword, setNewMemberPassword] = React.useState("")
+  const [newMemberRole, setNewMemberRole]       = React.useState<"ADMIN" | "EDITOR" | "ANALYST" | "VIEWER">("VIEWER")
+  const [showPassword, setShowPassword]         = React.useState(false)
+  const [isCreating, setIsCreating]             = React.useState(false)
+
   // AI Features states (persisted in localStorage)
   const [aiSubject, setAiSubject] = React.useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -204,6 +213,29 @@ export function SettingsClient({ organization, users }: SettingsClientProps) {
       toast.error("Failed to send invitation")
     } finally {
       setIsInviting(false)
+    }
+  }
+
+  const handleCreateMember = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newMemberName || !newMemberEmail || !newMemberPassword) return
+    setIsCreating(true)
+    try {
+      const res = await createTeamMember(newMemberName, newMemberEmail, newMemberPassword, newMemberRole)
+      if (res.success) {
+        toast.success(`✅ Account created for ${newMemberEmail}. They can now log in!`)
+        setNewMemberName("")
+        setNewMemberEmail("")
+        setNewMemberPassword("")
+        setNewMemberRole("VIEWER")
+        loadInvitesAndMembers()
+      } else {
+        toast.error(res.error || "Failed to create team member")
+      }
+    } catch (err) {
+      toast.error("Failed to create team member")
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -394,53 +426,106 @@ export function SettingsClient({ organization, users }: SettingsClientProps) {
         {/* TEAM USERS TAB */}
         <TabsContent value="users" className="mt-4 space-y-6">
           <div className="grid md:grid-cols-3 gap-6">
-            {/* Invite Form */}
+            {/* Add Member Form — Direct credential creation */}
             <Card className="border shadow-xs md:col-span-1 h-fit">
               <CardHeader className="border-b pb-4">
-                <CardTitle className="text-lg font-bold">Invite Member</CardTitle>
-                <CardDescription className="text-xs">Add new users and configure access roles.</CardDescription>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <User className="h-4 w-4 text-blue-500" />
+                  Add Team Member
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Create a login account directly — no email link needed. Share the credentials with your staff.
+                </CardDescription>
               </CardHeader>
-              <form onSubmit={handleInvite}>
-                <CardContent className="space-y-4 pt-4">
+              <form onSubmit={handleCreateMember}>
+                <CardContent className="space-y-3 pt-4">
+                  {/* Name */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="inviteEmail" className="text-xs font-semibold">Email Address</Label>
+                    <Label htmlFor="newMemberName" className="text-xs font-semibold">Full Name *</Label>
+                    <Input
+                      id="newMemberName"
+                      placeholder="e.g. Ravi Sharma"
+                      className="text-xs h-9"
+                      value={newMemberName}
+                      onChange={(e) => setNewMemberName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* Email (Login ID) */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newMemberEmail" className="text-xs font-semibold">Email (Login ID) *</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                       <Input
-                        id="inviteEmail"
+                        id="newMemberEmail"
                         type="email"
-                        placeholder="collaborator@company.com"
-                        className="pl-9 text-xs"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="ravi@yourcompany.com"
+                        className="pl-8 text-xs h-9"
+                        value={newMemberEmail}
+                        onChange={(e) => setNewMemberEmail(e.target.value)}
                         required
                       />
                     </div>
                   </div>
+
+                  {/* Password */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="inviteRole" className="text-xs font-semibold">Role</Label>
+                    <Label htmlFor="newMemberPassword" className="text-xs font-semibold">Password *</Label>
+                    <div className="relative">
+                      <Input
+                        id="newMemberPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Min. 8 characters"
+                        className="pr-9 text-xs h-9"
+                        value={newMemberPassword}
+                        onChange={(e) => setNewMemberPassword(e.target.value)}
+                        required
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowPassword(p => !p)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Give this password directly to the person.</p>
+                  </div>
+
+                  {/* Role */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newMemberRole" className="text-xs font-semibold">Role & Permissions</Label>
                     <select
-                      id="inviteRole"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value as any)}
+                      id="newMemberRole"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={newMemberRole}
+                      onChange={(e) => setNewMemberRole(e.target.value as any)}
                     >
-                      <option value="VIEWER">Viewer (Read-only)</option>
-                      <option value="ANALYST">Analyst (View & Export Reports)</option>
-                      <option value="EDITOR">Editor (Manage Campaigns & Contacts)</option>
-                      <option value="ADMIN">Admin (Full Control, No Billing)</option>
-                      <option value="OWNER">Owner (Full Control & Billing)</option>
+                      <option value="VIEWER">👁 Viewer — Can only view (read-only)</option>
+                      <option value="ANALYST">📊 Analyst — Can view reports &amp; export</option>
+                      <option value="EDITOR">✏️ Editor — Can manage campaigns &amp; contacts</option>
+                      <option value="ADMIN">🔑 Admin — Full control (no billing access)</option>
                     </select>
+                  </div>
+
+                  {/* Role explainer */}
+                  <div className="rounded-lg bg-muted/40 border p-3 text-[10px] text-muted-foreground space-y-1 leading-relaxed">
+                    <p><strong>Viewer</strong> — great for a data entry assistant who should only look</p>
+                    <p><strong>Editor</strong> — your staff member who sends emails &amp; manages clients</p>
+                    <p><strong>Admin</strong> — a trusted colleague who manages everything</p>
                   </div>
                 </CardContent>
                 <CardFooter className="border-t p-4 bg-muted/10">
-                  <Button type="submit" disabled={isInviting} className="w-full text-xs h-9 bg-blue-600 hover:bg-blue-700 text-white">
-                    {isInviting ? (
+                  <Button type="submit" disabled={isCreating} className="w-full text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {isCreating ? (
                       <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <Plus className="mr-1.5 h-3.5 w-3.5" />
                     )}
-                    Send Invite
+                    {isCreating ? "Creating Account..." : "Create Account & Share Credentials"}
                   </Button>
                 </CardFooter>
               </form>

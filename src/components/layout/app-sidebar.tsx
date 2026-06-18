@@ -322,7 +322,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <item.icon className={`size-4.5 shrink-0 mt-0.5 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
                     <div className="flex flex-col text-left leading-normal">
                       <span className="text-sm font-semibold">{item.title}</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal leading-tight group-data-[collapsible=icon]:hidden">{item.description}</span>
+                      <span className={`text-[10px] font-normal leading-tight group-data-[collapsible=icon]:hidden ${
+                        isActive ? "text-primary-foreground/75" : "text-muted-foreground/80"
+                      }`}>{item.description}</span>
                     </div>
                   </SidebarMenuButton>
                 </Link>

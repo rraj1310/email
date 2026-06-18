@@ -60,6 +60,7 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
   const [bdayBannerUrl, setBdayBannerUrl] = React.useState(birthdaySettings.templateConfig?.bannerUrl || "")
   const [isUploadingBanner, setIsUploadingBanner] = React.useState(false)
   const [isSavingConfig, setIsSavingConfig] = React.useState(false)
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false)
 
   const handleToggleBday = async (checked: boolean) => {
     setIsUpdatingBday(true)
@@ -439,22 +440,30 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
             </div>
 
             {/* Save Config Button */}
-            <div className="pt-1.5">
+            <div className="pt-1.5 flex gap-2">
               <Button
                 type="button"
                 onClick={handleSaveSimpleConfig}
                 disabled={isSavingConfig || isUploadingBanner}
-                className="h-10 w-full text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-bold shadow-md cursor-pointer"
+                className="flex-1 h-10 text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-bold shadow-md cursor-pointer"
               >
                 {isSavingConfig ? (
                   <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saving Settings...
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saving...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Save Birthday settings
+                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Save settings
                   </>
                 )}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setIsPreviewOpen(true)}
+                variant="outline"
+                className="h-10 px-3 border-amber-200 text-amber-800 hover:bg-amber-50 dark:border-slate-800 dark:text-amber-400 dark:hover:bg-slate-800 font-semibold cursor-pointer"
+              >
+                👁️ Preview
               </Button>
             </div>
 
@@ -607,6 +616,90 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
           </div>
         )}
       </div>
+
+      {/* Real-time Email Preview Modal */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden bg-card/95 backdrop-blur-md border shadow-2xl rounded-2xl">
+          <DialogHeader className="p-4 border-b bg-muted/20">
+            <DialogTitle className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <span>👁️ Real-time Email Preview</span>
+            </DialogTitle>
+            <DialogDescription className="text-[10px] text-muted-foreground">
+              See what your contacts will receive on their birthday.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Simulated Email Client Header */}
+          <div className="px-4 py-3 bg-muted/10 border-b text-xs space-y-1.5 font-sans">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground font-semibold w-12 text-right">From:</span>
+              <span className="font-medium text-foreground">Workspace Birthday System &lt;greetings@yourbrand.com&gt;</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground font-semibold w-12 text-right">To:</span>
+              <span className="font-medium text-foreground">John Doe &lt;john.doe@client.com&gt;</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground font-semibold w-12 text-right">Subject:</span>
+              <span className="font-bold text-primary">{bdaySubject || "Happy Birthday!"}</span>
+            </div>
+          </div>
+
+          {/* Email Body Canvas */}
+          <div className="p-6 bg-slate-100 dark:bg-slate-950 max-h-[350px] overflow-y-auto flex justify-center">
+            <div className="w-full max-w-[450px] bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow-md text-slate-800 dark:text-slate-200 text-xs">
+              {/* Banner */}
+              {bdayBannerUrl ? (
+                <div className="w-full bg-gradient-to-tr from-amber-400 to-pink-400 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={bdayBannerUrl}
+                    alt="Email Banner"
+                    className="w-full h-auto max-h-40 object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-24 bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center text-white text-3xl">
+                  🎂
+                </div>
+              )}
+
+              {/* Message */}
+              <div className="p-6 space-y-4 font-sans leading-relaxed">
+                <h2 className="text-base font-extrabold text-slate-950 dark:text-white text-center">
+                  Happy Birthday!
+                </h2>
+                <div 
+                  className="whitespace-pre-line text-slate-700 dark:text-slate-300"
+                  dangerouslySetInnerHTML={{
+                    __html: (bdayBody || "Wishing you a wonderful year ahead!")
+                      .replace(/\{\{firstName\}\}/g, "John")
+                      .replace(/\{\{lastName\}\}/g, "Doe")
+                      .replace(/\{\{email\}\}/g, "john.doe@client.com")
+                  }}
+                />
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-2 border-t">
+                  Sent automatically on your special day.
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border-t text-[9px] text-center text-slate-400 dark:text-slate-500 font-mono">
+                © {new Date().getFullYear()} Workspace Automations. All rights reserved.
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="p-3 border-t bg-muted/10 flex justify-end">
+            <Button
+              type="button"
+              onClick={() => setIsPreviewOpen(false)}
+              className="text-xs h-8 px-4 bg-primary text-primary-foreground font-bold cursor-pointer"
+            >
+              Close Preview
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

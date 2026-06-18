@@ -229,22 +229,55 @@ main, .flex-1 {
   border-right: 1px solid rgba(167, 139, 250, 0.1) !important;
 }
 
+/* Sleek capsule sidebar buttons */
+[data-sidebar="menu-button"] {
+  position: relative;
+  border-radius: 12px !important;
+  margin: 4px 8px !important;
+  width: calc(100% - 16px) !important;
+  padding-left: 12px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-sidebar="menu-button"]:hover {
+  transform: translateX(6px) scale(1.02) !important;
+  background: rgba(139, 92, 246, 0.08) !important;
+  color: var(--primary) !important;
+}
+.dark [data-sidebar="menu-button"]:hover {
+  background: rgba(167, 139, 250, 0.1) !important;
+}
+
+/* Active Sidebar Item Styling with Dynamic Theme Shadow & Left indicator bar */
+[data-sidebar="menu-button"][data-active="true"] {
+  background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l - 0.06) c h) 100%) !important;
+  box-shadow: 0 8px 20px -6px var(--primary) !important;
+  transform: scale(1.02) !important;
+}
+
+[data-sidebar="menu-button"][data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 25%;
+  height: 50%;
+  width: 3px;
+  background-color: oklch(0.99 0.005 285) !important;
+  border-radius: 99px;
+}
+
+/* Force active sidebar button text and child spans to be bright white */
+[data-sidebar="menu-button"][data-active="true"] *,
+[data-sidebar="menu-button"][data-active="true"] span,
+[data-sidebar="menu-button"][data-active="true"] div,
+[data-sidebar="menu-button"][data-active="true"] svg {
+  color: oklch(0.99 0.005 285) !important;
+}
+
 /* Sidebar Active Glowing Highlight */
 .bg-primary {
   background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l - 0.06) c h) 100%) !important;
   box-shadow: 0 4px 15px -3px var(--primary) !important;
-}
-
-/* Sidebar Interactive Micro-interactions */
-[data-sidebar="menu-button"] {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-[data-sidebar="menu-button"]:hover {
-  transform: translateX(6px) scale(1.02) !important;
-  color: var(--primary) !important;
-}
-[data-sidebar="menu-button"][data-active="true"] {
-  transform: scale(1.02) !important;
 }
 
 /* Text & Form Contrast Enhancements */

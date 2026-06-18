@@ -29,33 +29,33 @@ export default async function DashboardPage() {
     <div className="flex-1 space-y-4 p-4 md:p-6 w-full max-w-full overflow-hidden">
       
       {/* Live Stats Ticker Bar */}
-      <div className="w-full bg-slate-900 dark:bg-slate-950 text-slate-100 text-xs py-2 px-3 rounded-lg border border-slate-800 shadow-md flex items-center overflow-hidden gap-6 select-none">
+      <div className="w-full bg-slate-900 dark:bg-slate-950 text-slate-100 text-xs py-2 px-3 rounded-lg border border-slate-800 shadow-md flex items-center overflow-hidden gap-6 select-none animate-stagger-1">
         <div className="flex items-center gap-1.5 shrink-0 bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded text-[10px] animate-pulse">
           LIVE
         </div>
         <div className="flex gap-8 whitespace-nowrap overflow-x-auto scrollbar-none text-[11px] font-mono w-full">
           <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Contacts:</span> 
+            <span className="text-slate-400 font-medium">Contacts:</span> 
             <span className="font-semibold">{stats.totalContacts}</span>
             <span className="text-emerald-500 font-bold flex items-center gap-0.5">▲ +12.4%</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Emails Sent:</span> 
+            <span className="text-slate-400 font-medium">Emails Sent:</span> 
             <span className="font-semibold">{stats.totalSent}</span>
             <span className="text-emerald-500 font-bold flex items-center gap-0.5">▲ +5.8%</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Open Rate:</span> 
+            <span className="text-slate-400 font-medium">Open Rate:</span> 
             <span className="font-semibold">{stats.openRate}%</span>
             <span className="text-emerald-500 font-bold flex items-center gap-0.5">▲ +4.2%</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Click Rate:</span> 
+            <span className="text-slate-400 font-medium">Click Rate:</span> 
             <span className="font-semibold">{stats.clickRate}%</span>
             <span className="text-rose-500 font-bold flex items-center gap-0.5">▼ -1.1%</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Suppressed:</span> 
+            <span className="text-slate-400 font-medium">Suppressed:</span> 
             <span className="font-semibold">{stats.totalSuppressed}</span>
             <span className="text-slate-400 font-bold flex items-center gap-0.5">▬ 0.0%</span>
           </span>
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-stagger-2">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             Dashboard
@@ -83,7 +83,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Grid: 4 Metric Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-stagger-3">
         {/* Total Contacts */}
         <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
           <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-teal-500" />
@@ -224,7 +224,7 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Main Grid: Charts & Activities */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7 animate-stagger-4">
         {/* Engagement Overview Chart */}
         <Card className="col-span-1 lg:col-span-4 shadow-sm border min-w-0 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-4">

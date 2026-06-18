@@ -192,34 +192,74 @@ main, .flex-1 {
 
 /* Premium Glassmorphism Overrides */
 .rounded-xl.border.bg-card {
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(139, 92, 246, 0.16) !important;
-  box-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(139, 92, 246, 0.08) !important;
+  box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .dark .rounded-xl.border.bg-card {
-  background: rgba(18, 14, 30, 0.7) !important;
-  backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(167, 139, 250, 0.18) !important;
-  box-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  background: rgba(18, 14, 30, 0.45) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(167, 139, 250, 0.08) !important;
+  box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.03) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .rounded-xl.border.bg-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.5) !important;
-  box-shadow: 0 12px 36px -4px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-4px) scale(1.005) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
 }
 .dark .rounded-xl.border.bg-card:hover {
-  border-color: rgba(167, 139, 250, 0.28) !important;
-  box-shadow: 0 12px 36px -4px rgba(167, 139, 250, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  transform: translateY(-4px) scale(1.005) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 20px 40px -15px rgba(167, 139, 250, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Sidebar Styling Gradient */
+/* Sidebar Styling: Translucent Glassmorphism */
 [data-sidebar="sidebar"], .bg-sidebar {
-  background: linear-gradient(180deg, oklch(0.975 0.015 285) 0%, oklch(0.955 0.025 285) 100%) !important;
-  border-right: 1px solid oklch(0.9 0.03 285) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(28px) !important;
+  border-right: 1px solid rgba(139, 92, 246, 0.08) !important;
 }
 .dark [data-sidebar="sidebar"], .dark .bg-sidebar {
-  background: linear-gradient(180deg, oklch(0.12 0.03 285) 0%, oklch(0.08 0.03 285) 100%) !important;
-  border-right: 1px solid oklch(0.22 0.05 285 / 0.2) !important;
+  background: rgba(12, 10, 20, 0.5) !important;
+  backdrop-filter: blur(28px) !important;
+  border-right: 1px solid rgba(167, 139, 250, 0.08) !important;
+}
+
+/* Sidebar Active Glowing Highlight */
+.bg-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l - 0.06) c h) 100%) !important;
+  box-shadow: 0 4px 15px -3px var(--primary) !important;
+}
+
+/* Floating Ambient Orbs animations */
+.ambient-orb-1 {
+  animation: floatOrb1 20s ease-in-out infinite alternate;
+}
+.ambient-orb-2 {
+  animation: floatOrb2 25s ease-in-out infinite alternate;
+}
+.ambient-orb-3 {
+  animation: floatOrb3 30s ease-in-out infinite alternate;
+}
+
+@keyframes floatOrb1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(80px, -100px) scale(1.2); }
+  100% { transform: translate(-40px, 40px) scale(0.9); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-100px, 80px) scale(1.15); }
+  100% { transform: translate(50px, -50px) scale(0.95); }
+}
+
+@keyframes floatOrb3 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(50px, 100px) scale(1.08); }
+  100% { transform: translate(-80px, -60px) scale(0.9); }
 }

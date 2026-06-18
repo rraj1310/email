@@ -93,6 +93,153 @@ export async function getAutomationById(id: string) {
   }
 }
 
+// Pre-built email HTML template generator for automations
+function buildAutomationEmailHtml(
+  subject: string,
+  bodyText: string,
+  accentFrom: string,
+  accentTo: string,
+  emoji: string
+) {
+  const formattedBody = bodyText.replace(/\n/g, '<br />')
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${subject}</title>
+    <style>
+      body {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+      }
+      .header-bar {
+        height: 100px;
+        background: linear-gradient(135deg, ${accentFrom} 0%, ${accentTo} 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .title {
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .message {
+        font-size: 15px;
+        line-height: 1.8;
+        color: #334155;
+        margin-bottom: 30px;
+      }
+      .footer {
+        padding: 20px;
+        background-color: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+        font-size: 12px;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header-bar">
+        <span style="font-size: 42px;">${emoji}</span>
+      </div>
+      <div class="content">
+        <h1 class="title">${subject}</h1>
+        <div class="message">
+          ${formattedBody}
+        </div>
+      </div>
+      <div class="footer">
+        © ${new Date().getFullYear()} Your Workspace. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>`
+}
+
+// Trigger-specific default email templates
+function getTemplateDefaults(triggerType: string, workflowName: string) {
+  const templates: Record<string, {
+    campaignName: string
+    subject: string
+    bodyText: string
+    accentFrom: string
+    accentTo: string
+    emoji: string
+  }> = {
+    NEW_CONTACT: {
+      campaignName: `${workflowName} — Welcome Email`,
+      subject: "Welcome aboard! 👋",
+      bodyText: "Hi {{firstName}},\n\nThank you for joining us! We're thrilled to have you on board.\n\nIf you need any assistance, don't hesitate to reach out. We're here to help!\n\nWarm regards,\nThe Team",
+      accentFrom: "#3b82f6",
+      accentTo: "#06b6d4",
+      emoji: "👋"
+    },
+    TAG_ADDED: {
+      campaignName: `${workflowName} — Tag Notification`,
+      subject: "You've been added to a special group! ⭐",
+      bodyText: "Hi {{firstName}},\n\nGreat news! You've been selected for a special group in our community.\n\nStay tuned for exclusive updates and offers coming your way.\n\nBest regards,\nThe Team",
+      accentFrom: "#8b5cf6",
+      accentTo: "#a855f7",
+      emoji: "🏷️"
+    },
+    CAMPAIGN_OPENED: {
+      campaignName: `${workflowName} — Follow-Up Email`,
+      subject: "Thanks for reading! Here's more for you 📬",
+      bodyText: "Hi {{firstName}},\n\nWe noticed you checked out our recent email — thank you!\n\nHere's some additional information we thought you'd find valuable.\n\nFeel free to reply if you have any questions!\n\nBest,\nThe Team",
+      accentFrom: "#f59e0b",
+      accentTo: "#ef4444",
+      emoji: "📬"
+    },
+    LINK_CLICKED: {
+      campaignName: `${workflowName} — Engagement Email`,
+      subject: "We're glad you're interested! 🔗",
+      bodyText: "Hi {{firstName}},\n\nThanks for your interest! Since you clicked, we wanted to share more details.\n\nWe'd love to help you take the next step. Reply to this email or visit our website for more.\n\nCheers,\nThe Team",
+      accentFrom: "#10b981",
+      accentTo: "#059669",
+      emoji: "🔗"
+    },
+    BIRTHDAY: {
+      campaignName: `${workflowName} — Birthday Greeting`,
+      subject: "Happy Birthday! 🎂",
+      bodyText: "Dear {{firstName}},\n\nWishing you a wonderful birthday filled with happiness and success!\n\nHere's to an amazing year ahead. 🎉\n\nWarm wishes,\nThe Team",
+      accentFrom: "#f59e0b",
+      accentTo: "#ec4899",
+      emoji: "🎂"
+    }
+  }
+
+  return templates[triggerType] || {
+    campaignName: `${workflowName} — Automated Email`,
+    subject: "Hello from us! ✉️",
+    bodyText: "Hi {{firstName}},\n\nThis is an automated message from our team.\n\nWe appreciate your continued support!\n\nBest regards,\nThe Team",
+    accentFrom: "#6366f1",
+    accentTo: "#8b5cf6",
+    emoji: "✉️"
+  }
+}
+
 export async function createAutomation(name: string, triggerType: string) {
   try {
     const { organizationId } = await enforceWorkspaceEditor()
@@ -108,7 +255,32 @@ export async function createAutomation(name: string, triggerType: string) {
 
     const triggerLabel = triggerLabels[triggerType] || `Trigger: ${triggerType}`
 
-    // Default trigger and connected action node configs to make it simple for non-tech users
+    // 1. Auto-generate an email campaign template with pre-filled content
+    const tpl = getTemplateDefaults(triggerType, name)
+    const htmlContent = buildAutomationEmailHtml(
+      tpl.subject,
+      tpl.bodyText,
+      tpl.accentFrom,
+      tpl.accentTo,
+      tpl.emoji
+    )
+
+    const campaign = await prisma.campaign.create({
+      data: {
+        name: tpl.campaignName,
+        subject: tpl.subject,
+        htmlContent,
+        designContent: {
+          subject: tpl.subject,
+          bodyText: tpl.bodyText,
+          bannerUrl: ""
+        } as any,
+        status: "DRAFT",
+        organizationId
+      }
+    })
+
+    // 2. Create trigger + action nodes already linked to the campaign template
     const initialNodes = [
       {
         id: "trigger-node",
@@ -120,7 +292,7 @@ export async function createAutomation(name: string, triggerType: string) {
         id: "action-node-1",
         type: "actionNode",
         position: { x: 250, y: 280 },
-        data: { actionType: "SEND_EMAIL", label: "Send Email Campaign", campaignId: "" }
+        data: { actionType: "SEND_EMAIL", label: "Send Email Campaign", campaignId: campaign.id }
       }
     ]
 
@@ -136,7 +308,7 @@ export async function createAutomation(name: string, triggerType: string) {
       {
         nodeId: "action-node-1",
         actionType: "SEND_EMAIL",
-        campaignId: "",
+        campaignId: campaign.id,
         waitDays: 0,
         tagName: ""
       }
@@ -155,7 +327,7 @@ export async function createAutomation(name: string, triggerType: string) {
       }
     })
 
-    await logActivity(`Created automation workflow "${name}"`, "SETTINGS")
+    await logActivity(`Created automation workflow "${name}" with template "${tpl.campaignName}"`, "SETTINGS")
 
     return { success: true, data: rule }
   } catch (error) {

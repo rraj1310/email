@@ -476,26 +476,27 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
       </div>
 
       {/* Search and Filters Drawer Trigger */}
-      <div className="flex flex-col md:flex-row items-center gap-3">
-        {/* Normal Search */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search name or email..."
-            className="pl-9 w-full h-10 text-xs shadow-xs"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Normal Search */}
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search name or email..."
+              className="pl-9 w-full h-10 text-xs shadow-xs"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        {/* AI Filter Generator */}
-        <div className="relative w-full md:flex-1">
-          <Sparkles className="absolute left-3 top-3 h-4 w-4 text-blue-500 fill-blue-500/10" />
-          <Input
-            type="text"
-            placeholder="Ask AI to filter segment... (e.g. VIP subscribers, Inactive users)"
-            className="pl-9 pr-24 w-full h-10 text-xs shadow-xs border-blue-200 focus-visible:ring-blue-500 text-foreground"
+          {/* AI Filter Generator */}
+          <div className="relative flex-1 min-w-0">
+            <Sparkles className="absolute left-3 top-3 h-4 w-4 text-blue-500 fill-blue-500/10" />
+            <Input
+              type="text"
+              placeholder="AI filter: e.g. VIP subscribers..."
+              className="pl-9 pr-20 w-full h-10 text-xs shadow-xs border-blue-200 focus-visible:ring-blue-500 text-foreground"
             onKeyDown={async (e) => {
               if (e.key === "Enter") {
                 const query = e.currentTarget.value.trim()
@@ -523,53 +524,56 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
               }
             }}
           />
-          <div className="absolute right-2 top-2 text-[9px] text-muted-foreground bg-muted border px-1.5 py-0.5 rounded font-mono select-none">
-            Press Enter
+            <div className="absolute right-2 top-2 text-[9px] text-muted-foreground bg-muted border px-1.5 py-0.5 rounded font-mono select-none">
+              ↵ Enter
+            </div>
           </div>
         </div>
-        
-        {/* Sheet Filter Drawer */}
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger render={<Button variant="outline" className="w-full md:w-auto h-10 text-xs shrink-0" />}>
-            <Filter className="mr-1.5 h-3.5 w-3.5" />
-            Segment Filters
-            {activeSegmentRules.length > 0 && (
-              <Badge variant="secondary" className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                {activeSegmentRules.length}
-              </Badge>
-            )}
-          </SheetTrigger>
-          <SheetContent className="sm:max-w-md">
-            <SheetHeader className="pb-4 border-b">
-              <SheetTitle>Segmentation Builder</SheetTitle>
-              <SheetDescription className="text-xs">
-                Build advanced filter rules using AND / OR constraints.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6">
-              <SegmentationBuilder 
-                onApply={(rules) => {
-                  setActiveSegmentRules(rules)
-                  setIsSheetOpen(false)
-                  toast.success(`Applied ${rules.length} segment rules`)
-                }}
-                onClear={() => {
-                  setActiveSegmentRules([])
-                  setIsSheetOpen(false)
-                  toast.success("Filters cleared")
-                }}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
+
+        {/* Sheet Filter Drawer - on its own row */}
+        <div className="flex">
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger render={<Button variant="outline" className="w-full sm:w-auto h-9 text-xs shrink-0" />}>
+              <Filter className="mr-1.5 h-3.5 w-3.5" />
+              Segment Filters
+              {activeSegmentRules.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  {activeSegmentRules.length}
+                </Badge>
+              )}
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-md">
+              <SheetHeader className="pb-4 border-b">
+                <SheetTitle>Segmentation Builder</SheetTitle>
+                <SheetDescription className="text-xs">
+                  Build advanced filter rules using AND / OR constraints.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6">
+                <SegmentationBuilder 
+                  onApply={(rules) => {
+                    setActiveSegmentRules(rules)
+                    setIsSheetOpen(false)
+                    toast.success(`Applied ${rules.length} segment rules`)
+                  }}
+                  onClear={() => {
+                    setActiveSegmentRules([])
+                    setIsSheetOpen(false)
+                    toast.success("Filters cleared")
+                  }}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       {/* Grid Display: Responsive Adaptability */}
       <div className="border rounded-lg bg-card overflow-hidden shadow-xs">
         
         {/* DESKTOP TABLE VIEW (Visible on MD and larger viewports) */}
-        <div className="hidden md:block">
-          <Table>
+        <div className="hidden md:block overflow-x-auto">
+          <Table className="min-w-[600px]">
             <TableHeader className="bg-muted/30">
               <TableRow>
                 <TableHead className="font-semibold text-xs text-muted-foreground">Name</TableHead>
@@ -603,7 +607,9 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{contact.email}</TableCell>
+                  <TableCell className="text-muted-foreground max-w-[180px]">
+                    <span className="block truncate text-xs" title={contact.email}>{contact.email}</span>
+                  </TableCell>
                   <TableCell>
                     <Badge 
                       variant={contact.status === "ACTIVE" ? "default" : "secondary"}
@@ -617,12 +623,17 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {contact.tags.map((tag: Tag) => (
+                    <div className="flex flex-wrap gap-1 max-w-[160px]">
+                      {contact.tags.slice(0, 2).map((tag: Tag) => (
                         <Badge key={tag.id} variant="outline" className={`text-[10px] font-semibold py-0.5 px-1.5 border transition-all duration-200 hover:scale-[1.02] shadow-xs ${getTagColorClass(tag.name)}`}>
                           {tag.name}
                         </Badge>
                       ))}
+                      {contact.tags.length > 2 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                          +{contact.tags.length - 2}
+                        </Badge>
+                      )}
                       {contact.tags.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
                     </div>
                   </TableCell>

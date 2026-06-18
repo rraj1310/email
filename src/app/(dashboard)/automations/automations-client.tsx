@@ -224,66 +224,49 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
   }
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-5 p-4 md:p-6 pt-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Automations</h2>
-          <p className="text-muted-foreground text-sm">
-            Set up automated emails that send based on triggers (like a birthday greeting or welcome series).
+          <h2 className="text-2xl font-extrabold tracking-tight">Automations</h2>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Emails that send automatically — set it once, works forever.
           </p>
         </div>
 
-        {/* Create Automation Dialog Trigger */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger render={<Button className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer" />}>
+          <DialogTrigger render={<Button className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer shrink-0" />}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             New Automation
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[400px]">
+          <DialogContent className="sm:max-w-[380px]">
             <form onSubmit={handleCreate}>
               <DialogHeader className="pb-3 border-b mb-4">
-                <DialogTitle className="text-lg font-bold">New Automation</DialogTitle>
+                <DialogTitle className="text-base font-bold">New Automation</DialogTitle>
                 <DialogDescription className="text-xs">
-                  Trigger automated emails based on contact events (e.g. birthday, new signup).
+                  Pick a trigger — the system sends an email automatically when it fires.
                 </DialogDescription>
               </DialogHeader>
-
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="workflowName" className="text-xs font-semibold">Workflow Name *</Label>
-                  <Input 
-                    id="workflowName" 
-                    placeholder="Welcome series to Leads" 
-                    value={newWorkflowName} 
-                    onChange={(e) => setNewWorkflowName(e.target.value)} 
-                    required 
-                  />
+                  <Label htmlFor="workflowName" className="text-xs font-semibold">Name *</Label>
+                  <Input id="workflowName" placeholder="e.g. Welcome New Client" value={newWorkflowName} onChange={(e) => setNewWorkflowName(e.target.value)} required className="h-9 text-xs" />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="triggerType" className="text-xs font-semibold">Event Trigger</Label>
-                  <select 
-                    id="triggerType" 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={newTriggerType}
-                    onChange={(e) => setNewTriggerType(e.target.value)}
-                  >
-                    <option value="NEW_CONTACT">Contact Created (joins list)</option>
-                    <option value="TAG_ADDED">Tag Connected to Contact</option>
-                    <option value="CAMPAIGN_OPENED">Campaign Opened by Contact</option>
-                    <option value="LINK_CLICKED">Link Clicked inside Email</option>
-                    <option value="FORM_SUBMITTED">Form Submitted</option>
-                    <option value="BIRTHDAY">🎂 Contact's Birthday</option>
+                  <Label htmlFor="triggerType" className="text-xs font-semibold">When should it trigger?</Label>
+                  <select id="triggerType" className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring" value={newTriggerType} onChange={(e) => setNewTriggerType(e.target.value)}>
+                    <option value="NEW_CONTACT">📋 When a new contact is added</option>
+                    <option value="TAG_ADDED">🏷️ When a tag is added to a contact</option>
+                    <option value="CAMPAIGN_OPENED">📬 When a contact opens an email</option>
+                    <option value="LINK_CLICKED">🔗 When a contact clicks a link</option>
+                    <option value="BIRTHDAY">🎂 On a contact's birthday</option>
                   </select>
                 </div>
               </div>
-
-              <DialogFooter className="mt-6 pt-4 border-t">
-                <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)} disabled={isSaving} className="text-xs h-9">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
-                  {isSaving ? "Creating..." : "Create Automation"}
+              <DialogFooter className="mt-5 pt-4 border-t">
+                <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)} disabled={isSaving} className="text-xs h-8">Cancel</Button>
+                <Button type="submit" disabled={isSaving} className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+                  {isSaving ? "Creating..." : "Create"}
                 </Button>
               </DialogFooter>
             </form>
@@ -291,409 +274,189 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
         </Dialog>
       </div>
 
-      {/* Birthday Automation Settings Card */}
-      <Card className="border shadow-md bg-gradient-to-tr from-amber-500/5 to-pink-500/5 dark:from-amber-950/10 dark:to-pink-950/10 border-amber-200 dark:border-amber-900/40">
-        <CardHeader className="pb-4 border-b border-amber-100 dark:border-amber-900/20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-pink-500 text-white rounded-xl shadow-md">
-                <Cake className="h-6 w-6 animate-bounce" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-extrabold text-foreground flex items-center gap-2">
-                  Birthday Automation
-                </CardTitle>
-                <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                  Automatically send personalized greetings and milestone emails to clients on their special day.
-                </CardDescription>
-              </div>
+      {/* Birthday Automation — Compact Card */}
+      <div className="border rounded-xl bg-gradient-to-r from-amber-500/5 to-pink-500/5 dark:from-amber-950/10 dark:to-pink-950/10 border-amber-200/60 dark:border-amber-900/30 overflow-hidden">
+        {/* Card Header Row */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-100/60 dark:border-amber-900/20">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-gradient-to-tr from-amber-500 to-pink-500 text-white rounded-lg shadow-sm">
+              <Cake className="h-4 w-4" />
             </div>
-            
-            {/* Status Switch */}
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border px-4 py-2.5 rounded-xl shadow-xs shrink-0 self-start sm:self-auto">
-              <div className="text-right">
-                <span className="text-xs font-bold text-foreground block">
-                  {bdayEnabled ? "Automation Active" : "Automation Paused"}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {bdayEnabled ? "Daily checks enabled" : "Toggle to activate"}
-                </span>
-              </div>
-              <Switch 
-                checked={bdayEnabled} 
-                onCheckedChange={handleToggleBday} 
-                disabled={isUpdatingBday} 
-                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-500 data-[state=checked]:to-pink-500"
-              />
+            <div>
+              <p className="text-sm font-bold text-foreground leading-none">🎂 Birthday Greeting</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Auto-sends on each contact's birthday</p>
             </div>
           </div>
-        </CardHeader>
-        
-        <CardContent className="pt-6 grid gap-6 md:grid-cols-3">
-          {/* Section 1: Setup Birthday Email Form (Plain text + upload image) */}
-          <div className="space-y-4 border-r border-amber-100/50 dark:border-amber-900/20 pr-4 last:border-0 md:col-span-1">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-              <Settings className="h-4 w-4" /> Setup Birthday Email
-            </h4>
+          <div className="flex items-center gap-2.5">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${bdayEnabled ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+              {bdayEnabled ? "● Active" : "○ Paused"}
+            </span>
+            <Switch checked={bdayEnabled} onCheckedChange={handleToggleBday} disabled={isUpdatingBday} className="data-[state=checked]:bg-emerald-500 scale-90" />
+          </div>
+        </div>
 
-            {/* Email Subject Input */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="bdaySubjectInput" className="text-xs font-semibold text-foreground">
-                Email Subject Line
-              </Label>
-              <Input
-                id="bdaySubjectInput"
-                placeholder="Happy Birthday! 🎂"
-                value={bdaySubject}
-                onChange={(e) => setBdaySubject(e.target.value)}
-                required
-              />
+        {/* Card Body — 2 columns */}
+        <div className="grid md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-amber-100/50 dark:divide-amber-900/20">
+          {/* Left: Email Settings */}
+          <div className="p-4 space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+              <Settings className="h-3 w-3" /> Email Settings
+            </p>
+
+            <div className="grid gap-1">
+              <Label htmlFor="bdaySubjectInput" className="text-xs font-semibold">Subject Line</Label>
+              <Input id="bdaySubjectInput" placeholder="Happy Birthday! 🎂" value={bdaySubject} onChange={(e) => setBdaySubject(e.target.value)} className="h-8 text-xs" />
             </div>
 
-            {/* Email Banner Upload */}
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                <span>Email Banner Image</span>
-                {bdayBannerUrl && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveBanner}
-                    className="text-[10px] text-destructive hover:underline font-bold"
-                  >
-                    Remove banner
-                  </button>
-                )}
-              </Label>
+            <div className="grid gap-1">
+              <Label htmlFor="bdayBodyInput" className="text-xs font-semibold">Email Message</Label>
+              <textarea id="bdayBodyInput" rows={3} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring resize-none" placeholder="Dear {{firstName}}, wishing you a great birthday!" value={bdayBody} onChange={(e) => setBdayBody(e.target.value)} />
+              <p className="text-[9px] text-muted-foreground">Use <code className="bg-muted px-1 rounded">{"{{firstName}}"}</code> to insert the client's name.</p>
+            </div>
 
-              {bdayBannerUrl ? (
-                <div className="relative border rounded-lg overflow-hidden bg-muted/25 flex flex-col gap-1.5 p-1">
-                  <img
-                    src={bdayBannerUrl}
-                    alt="Uploaded Banner"
-                    className="w-full h-20 object-cover rounded-md"
-                  />
-                  <div className="text-[9px] text-muted-foreground truncate px-1 text-center">
-                    Image uploaded successfully
-                  </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-1">
+                <Label htmlFor="bdayTime" className="text-xs font-semibold">Send Time</Label>
+                <div className="relative">
+                  <Clock className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input id="bdayTime" type="time" className="pl-7 h-8 text-xs w-full" value={bdayTime} onChange={handleTimeChange} />
                 </div>
-              ) : (
-                <div className="border border-dashed border-input rounded-lg p-3 text-center bg-background/50 hover:bg-amber-500/5 transition-colors cursor-pointer relative group">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerUpload}
-                    disabled={isUploadingBanner}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                    {isUploadingBanner ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                        <span className="text-[10px]">Uploading to cloud...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 group-hover:text-amber-500 transition-colors" />
-                        <span className="text-[10px] font-medium">Click to upload banner image</span>
-                        <span className="text-[9px] opacity-75">PNG, JPG or WebP (Cloudinary hosted)</span>
-                      </>
-                    )}
-                  </div>
+              </div>
+              <div className="grid gap-1">
+                <Label className="text-xs font-semibold">Banner Image</Label>
+                <div className="relative h-8 border border-dashed rounded-md flex items-center justify-center text-[10px] text-muted-foreground cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/20 overflow-hidden">
+                  <input type="file" accept="image/*" onChange={handleBannerUpload} disabled={isUploadingBanner} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  {isUploadingBanner ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />Uploading...</> : bdayBannerUrl ? "✅ Uploaded" : <><Upload className="h-3 w-3 mr-1" />Upload</>}
                 </div>
-              )}
-            </div>
-
-            {/* Email Message Text Box */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="bdayBodyInput" className="text-xs font-semibold text-foreground">
-                Email Message Text
-              </Label>
-              <textarea
-                id="bdayBodyInput"
-                rows={4}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring resize-none font-sans"
-                placeholder="Type your warm birthday greeting here..."
-                value={bdayBody}
-                onChange={(e) => setBdayBody(e.target.value)}
-                required
-              />
-              <p className="text-[9px] text-muted-foreground leading-normal">
-                You can use personalization placeholders like <code className="bg-muted/80 px-1 rounded">{"{{firstName}}"}</code> to print the client's name automatically.
-              </p>
-            </div>
-
-            {/* Daily Send Time */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="bdayTime" className="text-xs font-semibold text-foreground">
-                Daily Send Time (IST)
-              </Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="bdayTime" 
-                  type="time" 
-                  className="pl-9 h-10 w-full text-sm"
-                  value={bdayTime}
-                  onChange={handleTimeChange}
-                />
               </div>
             </div>
 
-            {/* Save Config Button */}
-            <div className="pt-1.5 flex gap-2">
-              <Button
-                type="button"
-                onClick={handleSaveSimpleConfig}
-                disabled={isSavingConfig || isUploadingBanner}
-                className="flex-1 h-10 text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-bold shadow-md cursor-pointer"
-              >
-                {isSavingConfig ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Save settings
-                  </>
-                )}
+            <div className="flex gap-2 pt-1">
+              <Button type="button" onClick={handleSaveSimpleConfig} disabled={isSavingConfig} className="flex-1 h-8 text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-semibold cursor-pointer">
+                {isSavingConfig ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" />Saving...</> : <><CheckCircle className="mr-1 h-3 w-3" />Save Settings</>}
               </Button>
-              <Button
-                type="button"
-                onClick={() => setIsPreviewOpen(true)}
-                variant="outline"
-                className="h-10 px-3 border-amber-200 text-amber-800 hover:bg-amber-50 dark:border-slate-800 dark:text-amber-400 dark:hover:bg-slate-800 font-semibold cursor-pointer"
-              >
+              <Button type="button" onClick={() => setIsPreviewOpen(true)} variant="outline" className="h-8 px-3 text-xs border-amber-200 cursor-pointer">
                 👁️ Preview
               </Button>
-            </div>
-
-            {/* Trigger Manual Check button */}
-            <div className="pt-2 border-t border-amber-100/60 dark:border-amber-900/20">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleTriggerNow} 
-                disabled={isTriggeringNow} 
-                className="h-9 w-full text-[11px] bg-amber-50/50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:border-amber-900 dark:text-amber-400 font-semibold cursor-pointer"
-              >
-                {isTriggeringNow ? (
-                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Checking Today's Birthdays...</>
-                ) : (
-                  <><Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-600" /> Test Run: Check & Send Today</>
-                )}
+              <Button variant="outline" size="sm" onClick={handleTriggerNow} disabled={isTriggeringNow} className="h-8 px-2 text-[10px] border-amber-200 text-amber-800 dark:text-amber-400 cursor-pointer">
+                {isTriggeringNow ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
               </Button>
             </div>
           </div>
 
-          
-          {/* Section 2: Today's Birthdays Preview */}
-          <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center justify-between pb-1">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-pink-700 dark:text-pink-400 flex items-center gap-1.5">
-                Today's Birthdays
-                <Badge variant="secondary" className="px-2 py-0 text-[10px] bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400 font-bold">
-                  {todayBirthdays.length}
-                </Badge>
-              </h4>
-              <span className="text-[10px] text-muted-foreground">Month/Day matches IST today</span>
+          {/* Right: Today's Birthdays */}
+          <div className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-pink-700 dark:text-pink-400">Today's Birthdays</p>
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-pink-500/10 text-pink-600 dark:text-pink-400">
+                {todayBirthdays.length}
+              </Badge>
             </div>
-            
-            <div className="border rounded-xl bg-white/70 dark:bg-slate-900/60 p-3 max-h-[160px] overflow-y-auto">
-              {todayBirthdays.length > 0 ? (
-                <div className="divide-y divide-amber-100/50 dark:divide-slate-800">
-                  {todayBirthdays.map((c) => (
-                    <div key={c.id} className="py-2 flex items-center justify-between text-xs hover:bg-amber-500/5 dark:hover:bg-pink-500/5 px-2 rounded-md transition-colors">
-                      <div className="font-semibold text-foreground flex items-center gap-1.5">
-                        <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-amber-400 to-pink-400 flex items-center justify-center text-[9px] text-white font-bold">
-                          {c.name[0].toUpperCase()}
-                        </div>
-                        {c.name}
-                      </div>
-                      <span className="text-muted-foreground font-mono">{c.email}</span>
+            <div className="rounded-lg border bg-white/60 dark:bg-slate-900/50 max-h-[180px] overflow-y-auto divide-y divide-amber-50 dark:divide-slate-800">
+              {todayBirthdays.length > 0 ? todayBirthdays.map((c) => (
+                <div key={c.id} className="px-3 py-2 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-amber-400 to-pink-400 flex items-center justify-center text-[9px] text-white font-bold shrink-0">
+                      {c.name[0].toUpperCase()}
                     </div>
-                  ))}
+                    <span className="font-semibold text-foreground truncate max-w-[100px]">{c.name}</span>
+                  </div>
+                  <span className="text-muted-foreground text-[10px] truncate max-w-[120px]">{c.email}</span>
                 </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground text-xs leading-normal">
-                  🎈 No birthdays scheduled for today.
-                </div>
+              )) : (
+                <div className="py-8 text-center text-muted-foreground text-[11px]">🎈 No birthdays today</div>
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Grid listing */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
-        {workflows.map(item => {
-          const status = getStatus(item)
-          
-          return (
-            <Card key={item.id} className="border shadow-xs hover:shadow-md transition-all duration-300 relative bg-card">
-              <CardHeader className="pb-3 border-b">
-                <div className="flex justify-between items-start gap-2">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-md shrink-0">
-                    <Workflow className="h-5 w-5" />
-                  </div>
-                  <Badge variant={status === "ACTIVE" ? "default" : "secondary"} className={`text-[9px] font-bold ${
-                    status === "ACTIVE" 
-                      ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10" 
-                      : "bg-muted-foreground/15 text-muted-foreground"
-                  }`}>
-                    {status}
-                  </Badge>
-                </div>
-                <CardTitle className="mt-3 text-base font-bold text-foreground truncate">{item.name}</CardTitle>
-                <CardDescription className="text-[11px] truncate">
-                  Trigger: {item.triggerType}
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="pt-4 space-y-4">
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-2 gap-2 border rounded-md p-2.5 bg-muted/10 text-xs">
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Enrolled</p>
-                    <p className="font-extrabold text-sm text-foreground">{item.metrics?.entered || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Completed</p>
-                    <p className="font-extrabold text-sm text-foreground">{item.metrics?.completed || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Open Rate</p>
-                    <p className="font-extrabold text-sm text-foreground">{Number(item.metrics?.openRate || 0).toFixed(1)}%</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Click Rate</p>
-                    <p className="font-extrabold text-sm text-foreground">{Number(item.metrics?.clickRate || 0).toFixed(1)}%</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                  <span>Active: <strong className="text-foreground font-semibold">{item.metrics?.active || 0}</strong></span>
-                  <span>Exit Rate: <strong className="text-foreground font-semibold">{Number(item.metrics?.exitRate || 0).toFixed(1)}%</strong></span>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="h-8 text-xs flex-1 border-indigo-200/80 hover:bg-indigo-50 hover:text-indigo-600 dark:border-indigo-900/50 dark:hover:bg-indigo-950/20">
-                    <Link href={`/automations/${item.id}/editor`} className="flex items-center justify-center w-full h-full">
-                      <Settings className="mr-1 h-3.5 w-3.5" /> Edit Flow
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleToggle(item.id)} className="h-8 text-xs flex-1">
-                    {status === "ACTIVE" ? (
-                      <>
-                        <Pause className="mr-1 h-3.5 w-3.5 text-amber-500" /> Pause
-                      </>
-                    ) : (
-                      <>
-                        <Play className="mr-1 h-3.5 w-3.5 text-emerald-500" /> Run
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10 border-destructive/20 shrink-0"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-
-        {workflows.length === 0 && (
-          <div className="col-span-full py-16 text-center text-muted-foreground text-xs flex flex-col items-center justify-center border border-dashed rounded-lg bg-muted/10 h-64">
-            <Workflow className="h-10 w-10 mb-2 opacity-50 text-blue-500" />
-            <h3 className="text-md font-semibold text-foreground">No Workflows</h3>
-            <p className="text-[11px] max-w-sm mt-1">
-              Add auto-responses or drip marketing series triggers.
-            </p>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* Real-time Email Preview Modal */}
+      {/* Workflow Cards — Compact List */}
+      {workflows.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other Automations</p>
+          <div className="grid gap-2">
+            {workflows.map(item => {
+              const status = getStatus(item)
+              const triggerLabels: Record<string, string> = {
+                NEW_CONTACT: "📋 New contact added",
+                TAG_ADDED: "🏷️ Tag added to contact",
+                CAMPAIGN_OPENED: "📬 Contact opened email",
+                LINK_CLICKED: "🔗 Contact clicked link",
+                FORM_SUBMITTED: "📝 Form submitted",
+                BIRTHDAY: "🎂 Contact's birthday",
+                SCHEDULED: "⏰ Scheduled time",
+                MANUAL: "✋ Manual trigger",
+              }
+              return (
+                <div key={item.id} className="flex items-center justify-between gap-3 border rounded-lg px-4 py-3 bg-card hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-md shrink-0">
+                      <Workflow className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{triggerLabels[item.triggerType] || item.triggerType}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant={status === "ACTIVE" ? "default" : "secondary"} className={`text-[9px] font-bold ${status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-500" : "bg-muted-foreground/10 text-muted-foreground"}`}>
+                      {status}
+                    </Badge>
+                    <Button variant="outline" size="sm" onClick={() => handleToggle(item.id)} className="h-7 text-[10px] px-2">
+                      {status === "ACTIVE" ? <><Pause className="mr-1 h-3 w-3 text-amber-500" />Pause</> : <><Play className="mr-1 h-3 w-3 text-emerald-500" />Run</>}
+                    </Button>
+                    <Link href={`/automations/${item.id}/editor`}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                        <Settings className="h-3.5 w-3.5" />
+                      </Button>
+                    </Link>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={() => handleDelete(item.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {workflows.length === 0 && (
+        <div className="py-12 text-center text-muted-foreground border border-dashed rounded-lg bg-muted/10">
+          <Workflow className="h-8 w-8 mb-2 opacity-40 text-blue-500 mx-auto" />
+          <p className="text-sm font-semibold text-foreground">No other automations yet</p>
+          <p className="text-xs mt-1">Click "New Automation" to create one.</p>
+        </div>
+      )}
+
+      {/* Email Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden bg-card/95 backdrop-blur-md border shadow-2xl rounded-2xl">
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
           <DialogHeader className="p-4 border-b bg-muted/20">
-            <DialogTitle className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              <span>👁️ Real-time Email Preview</span>
-            </DialogTitle>
-            <DialogDescription className="text-[10px] text-muted-foreground">
-              See what your contacts will receive on their birthday.
-            </DialogDescription>
+            <DialogTitle className="text-sm font-bold">👁️ Email Preview</DialogTitle>
+            <DialogDescription className="text-[10px]">This is what your contacts will receive.</DialogDescription>
           </DialogHeader>
-
-          {/* Simulated Email Client Header */}
-          <div className="px-4 py-3 bg-muted/10 border-b text-xs space-y-1.5 font-sans">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-semibold w-12 text-right">From:</span>
-              <span className="font-medium text-foreground">Workspace Birthday System &lt;greetings@yourbrand.com&gt;</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-semibold w-12 text-right">To:</span>
-              <span className="font-medium text-foreground">John Doe &lt;john.doe@client.com&gt;</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-semibold w-12 text-right">Subject:</span>
-              <span className="font-bold text-primary">{bdaySubject || "Happy Birthday!"}</span>
-            </div>
+          <div className="px-4 py-2 bg-muted/10 border-b text-xs space-y-1">
+            <div className="flex gap-2"><span className="text-muted-foreground w-14 text-right">Subject:</span><span className="font-bold text-primary">{bdaySubject || "Happy Birthday!"}</span></div>
+            <div className="flex gap-2"><span className="text-muted-foreground w-14 text-right">To:</span><span>John Doe &lt;john.doe@client.com&gt;</span></div>
           </div>
-
-          {/* Email Body Canvas */}
-          <div className="p-6 bg-slate-100 dark:bg-slate-950 max-h-[350px] overflow-y-auto flex justify-center">
-            <div className="w-full max-w-[450px] bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow-md text-slate-800 dark:text-slate-200 text-xs">
-              {/* Banner */}
+          <div className="p-4 bg-slate-100 dark:bg-slate-950 max-h-[320px] overflow-y-auto flex justify-center">
+            <div className="w-full max-w-[420px] bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow text-xs">
               {bdayBannerUrl ? (
-                <div className="w-full bg-gradient-to-tr from-amber-400 to-pink-400 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={bdayBannerUrl}
-                    alt="Email Banner"
-                    className="w-full h-auto max-h-40 object-cover"
-                  />
-                </div>
+                <img src={bdayBannerUrl} alt="Banner" className="w-full h-32 object-cover" />
               ) : (
-                <div className="h-24 bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center text-white text-3xl">
-                  🎂
-                </div>
+                <div className="h-20 bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center text-white text-2xl">🎂</div>
               )}
-
-              {/* Message */}
-              <div className="p-6 space-y-4 font-sans leading-relaxed">
-                <h2 className="text-base font-extrabold text-slate-950 dark:text-white text-center">
-                  Happy Birthday!
-                </h2>
-                <div 
-                  className="whitespace-pre-line text-slate-700 dark:text-slate-300"
-                  dangerouslySetInnerHTML={{
-                    __html: (bdayBody || "Wishing you a wonderful year ahead!")
-                      .replace(/\{\{firstName\}\}/g, "John")
-                      .replace(/\{\{lastName\}\}/g, "Doe")
-                      .replace(/\{\{email\}\}/g, "john.doe@client.com")
-                  }}
-                />
+              <div className="p-5 space-y-3 font-sans leading-relaxed">
+                <h2 className="text-sm font-extrabold text-center">Happy Birthday!</h2>
+                <div className="text-slate-700 dark:text-slate-300 whitespace-pre-line" dangerouslySetInnerHTML={{ __html: (bdayBody || "Wishing you a wonderful year ahead!").replace(/\{\{firstName\}\}/g, "John").replace(/\{\{lastName\}\}/g, "Doe").replace(/\{\{email\}\}/g, "john.doe@client.com") }} />
               </div>
-
-              {/* Footer */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border-t text-[9px] text-center text-slate-400 dark:text-slate-500 font-mono">
-                © {new Date().getFullYear()} Workspace Automations. All rights reserved.
-              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border-t text-[9px] text-center text-slate-400">© {new Date().getFullYear()} Your Workspace</div>
             </div>
           </div>
-
-          <DialogFooter className="p-3 border-t bg-muted/10 flex justify-end">
-            <Button
-              type="button"
-              onClick={() => setIsPreviewOpen(false)}
-              className="text-xs h-8 px-4 bg-primary text-primary-foreground font-bold cursor-pointer"
-            >
-              Close Preview
-            </Button>
+          <DialogFooter className="p-3 border-t bg-muted/10">
+            <Button type="button" onClick={() => setIsPreviewOpen(false)} className="text-xs h-8 cursor-pointer">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

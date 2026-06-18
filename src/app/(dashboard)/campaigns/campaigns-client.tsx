@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Search, MoreHorizontal, FileEdit, Send, Copy, Pause, Play, Trash2, ArrowUpRight, BarChart, Sparkles } from "lucide-react"
+import { Plus, Search, MoreHorizontal, FileEdit, Send, Copy, Pause, Play, Trash2, BarChart, Sparkles, Eye } from "lucide-react"
 import Link from "next/link"
 import { Campaign } from "@prisma/client"
 import { createCampaign, deleteCampaign, cloneCampaign, toggleCampaignStatus, sendTestCampaign } from "@/app/actions/campaigns"
@@ -41,6 +41,9 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
   const [selectedCampaignId, setSelectedCampaignId] = React.useState<string | null>(null)
   const [testEmail, setTestEmail] = React.useState("")
   const [isSaving, setIsSaving] = React.useState(false)
+
+  // Preview modal state
+  const [previewCampaign, setPreviewCampaign] = React.useState<Campaign | null>(null)
 
   // Form states
   const [newCampaignName, setNewCampaignName] = React.useState("")
@@ -309,7 +312,16 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
                   </div>
                   
                   {/* Right Side: Options Menu & Direct link */}
-                  <div className="flex items-center gap-2 self-end md:self-center">
+                  <div className="flex items-center gap-2 self-end md:self-center flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs font-medium text-purple-600 border-purple-200 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-900/50 dark:hover:bg-purple-950/20"
+                      onClick={() => setPreviewCampaign(campaign)}
+                    >
+                      <Eye className="mr-1.5 h-3.5 w-3.5" />
+                      Preview
+                    </Button>
                     <Link href={`/campaigns/${campaign.id}/editor`} passHref>
                       <Button variant="outline" size="sm" className="h-8 text-xs font-medium">
                         <FileEdit className="mr-1.5 h-3.5 w-3.5" />
@@ -396,26 +408,97 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
             <div className="space-y-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="testEmail" className="text-xs font-semibold">Receive Test Copy Email</Label>
-                <Input 
-                  id="testEmail" 
-                  type="email" 
-                  placeholder="tester@yourcompany.com" 
-                  value={testEmail} 
-                  onChange={(e) => setTestEmail(e.target.value)} 
-                  required 
-                />
+                <Input id="testEmail" type="email" placeholder="tester@yourcompany.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} required />
               </div>
             </div>
 
             <DialogFooter className="mt-6 pt-4 border-t">
-              <Button variant="outline" type="button" onClick={() => setIsSendTestOpen(false)} disabled={isSaving} className="text-xs h-9">
-                Cancel
-              </Button>
+              <Button variant="outline" type="button" onClick={() => setIsSendTestOpen(false)} disabled={isSaving} className="text-xs h-9">Cancel</Button>
               <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-blue-600 hover:bg-blue-700 text-white">
                 {isSaving ? "Simulating..." : "Trigger Send Simulation"}
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== CAMPAIGN PREVIEW MODAL ===== */}
+      <Dialog open={!!previewCampaign} onOpenChange={(open) => { if (!open) setPreviewCampaign(null) }}>
+        <DialogContent className="max-w-2xl w-full p-0 overflow-hidden">
+          {/* Modal Header */}
+          <DialogHeader className="px-5 py-3 border-b bg-muted/20">
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <Eye className="h-4 w-4 text-purple-500" />
+              Email Preview
+              {previewCampaign && (
+                <span className="text-muted-foreground font-normal text-xs">— {previewCampaign.name}</span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Simulated email client header */}
+          {previewCampaign && (
+            <div className="px-5 py-3 bg-muted/10 border-b text-xs space-y-1 font-sans">
+              <div className="flex gap-2 items-center">
+                <span className="text-muted-foreground font-semibold w-16 text-right shrink-0">Subject:</span>
+                <span className="font-bold text-foreground">{previewCampaign.subject || "(No Subject)"}</span>
+              </div>
+              {previewCampaign.previewText && (
+                <div className="flex gap-2 items-center">
+                  <span className="text-muted-foreground font-semibold w-16 text-right shrink-0">Preview:</span>
+                  <span className="text-muted-foreground italic truncate">{previewCampaign.previewText}</span>
+                </div>
+              )}
+              <div className="flex gap-2 items-center">
+                <span className="text-muted-foreground font-semibold w-16 text-right shrink-0">Status:</span>
+                <Badge variant="secondary" className="text-[9px] capitalize">{String(previewCampaign.status).toLowerCase()}</Badge>
+              </div>
+            </div>
+          )}
+
+          {/* Email body render */}
+          <div className="bg-slate-100 dark:bg-slate-950 max-h-[420px] overflow-y-auto p-4 flex justify-center">
+            {previewCampaign?.htmlContent ? (
+              <div
+                className="w-full max-w-[600px] bg-white dark:bg-slate-900 rounded-xl shadow overflow-hidden border"
+                style={{ minHeight: 200 }}
+              >
+                <iframe
+                  srcDoc={previewCampaign.htmlContent}
+                  className="w-full"
+                  style={{ minHeight: 360, border: "none" }}
+                  sandbox="allow-same-origin"
+                  title="Email Preview"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground gap-3">
+                <FileEdit className="h-10 w-10 opacity-30" />
+                <div>
+                  <p className="font-semibold text-foreground text-sm">No design saved yet</p>
+                  <p className="text-xs mt-1">Open the Design Editor to create your email layout, then save it — the preview will appear here.</p>
+                </div>
+                {previewCampaign && (
+                  <Link href={`/campaigns/${previewCampaign.id}/editor`}>
+                    <Button size="sm" className="h-8 text-xs mt-2 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setPreviewCampaign(null)}>
+                      <FileEdit className="mr-1.5 h-3.5 w-3.5" /> Open Design Editor
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="px-5 py-3 border-t bg-muted/10">
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setPreviewCampaign(null)}>Close</Button>
+            {previewCampaign && (
+              <Link href={`/campaigns/${previewCampaign.id}/editor`}>
+                <Button size="sm" className="text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setPreviewCampaign(null)}>
+                  <FileEdit className="mr-1.5 h-3.5 w-3.5" /> Edit Design
+                </Button>
+              </Link>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

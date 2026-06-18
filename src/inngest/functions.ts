@@ -699,4 +699,100 @@ export const personalizedDispatch = inngest.createFunction(
   }
 )
 
+// 13. Cron check for scheduled custom automations running hourly
+export const scheduledAutomationCheck = inngest.createFunction(
+  { id: "scheduled-automation-check", triggers: [{ cron: "0 * * * *" }] },
+  async ({ step }: any) => {
+    // 1. Get current time in India/Kolkata (IST) timezone
+    const now = new Date()
+    const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false } as const
+    const formatter = new Intl.DateTimeFormat('en-US', options)
+    const parts = formatter.formatToParts(now)
+    
+    const year = parts.find(p => p.type === 'year')?.value
+    const month = parts.find(p => p.type === 'month')?.value
+    const day = parts.find(p => p.type === 'day')?.value
+    const hour = parts.find(p => p.type === 'hour')?.value
+    
+    const currentDateStr = `${year}-${month}-${day}`
+    const currentHourStr = hour
+
+    // 2. Fetch all active automations
+    const activeRules = await step.run("fetch-active-rules", async () => {
+      return db.automationRule.findMany({
+        where: { isActive: true }
+      })
+    })
+
+    let triggeredCount = 0
+
+    for (const rule of activeRules) {
+      const config = (rule.triggerConfig as any) || {}
+      const { sendDate, sendTime } = config
+
+      if (!sendDate || !sendTime) continue
+
+      // Match the date (YYYY-MM-DD)
+      if (sendDate !== currentDateStr) continue
+
+      // Match the hour of sendTime (e.g. config "09:30" matches hour "09")
+      const configHour = sendTime.split(":")[0]
+      if (configHour !== currentHourStr) continue
+
+      // Enroll all active contacts in this organization into the automation rule
+      await step.run(`trigger-scheduled-rule-${rule.id}`, async () => {
+        const contacts = await db.contact.findMany({
+          where: {
+            organizationId: rule.organizationId,
+            status: "ACTIVE" as any
+          }
+        })
+
+        for (const contact of contacts) {
+          const state = await enrollContactInWorkflow(contact.id, rule.id, rule.organizationId)
+          if (state) {
+            await inngest.send({
+              name: "automation/run-journey",
+              data: {
+                contactId: contact.id,
+                automationRuleId: rule.id,
+                organizationId: rule.organizationId,
+                currentStateId: "trigger-node"
+              }
+            })
+          }
+        }
+
+        // Set isActive to false since it's a one-off scheduled trigger, and store lastRun timestamp
+        await db.automationRule.update({
+          where: { id: rule.id },
+          data: {
+            isActive: false,
+            triggerConfig: {
+              ...config,
+              lastRun: new Date().toISOString()
+            }
+          }
+        })
+
+        // Log main workspace activity feed
+        await db.activityLog.create({
+          data: {
+            action: "Scheduled Automation Triggered",
+            entityType: "SETTINGS",
+            entityId: rule.id,
+            details: { message: `Scheduled automation "${rule.name}" triggered at ${sendTime} on ${sendDate} and sent to ${contacts.length} active contacts.` },
+            organizationId: rule.organizationId
+          }
+        })
+      })
+
+      triggeredCount++
+    }
+
+    return { triggeredCount }
+  }
+)
+
+
 

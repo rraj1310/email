@@ -58,8 +58,34 @@ export async function getAutomations() {
       const conversionRate = entered > 0 ? (completed / entered) * 100 : 0
       const exitRate = entered > 0 ? (exited / entered) * 100 : 0
 
+      // Fetch linked campaign template data for inline editing
+      let templateConfig: { campaignId: string; subject: string; bodyText: string; bannerUrl: string } | null = null
+      if (campaignIds.length > 0) {
+        const linkedCampaign = await prisma.campaign.findFirst({
+          where: { id: campaignIds[0] },
+          select: { id: true, subject: true, designContent: true }
+        })
+        if (linkedCampaign) {
+          let parsed: any = {}
+          if (linkedCampaign.designContent) {
+            try {
+              parsed = typeof linkedCampaign.designContent === "string"
+                ? JSON.parse(linkedCampaign.designContent)
+                : linkedCampaign.designContent
+            } catch {}
+          }
+          templateConfig = {
+            campaignId: linkedCampaign.id,
+            subject: parsed.subject || linkedCampaign.subject || "",
+            bodyText: parsed.bodyText || "",
+            bannerUrl: parsed.bannerUrl || ""
+          }
+        }
+      }
+
       return {
         ...rule,
+        templateConfig,
         metrics: {
           entered,
           completed,
@@ -329,7 +355,27 @@ export async function createAutomation(name: string, triggerType: string) {
 
     await logActivity(`Created automation workflow "${name}" with template "${tpl.campaignName}"`, "SETTINGS")
 
-    return { success: true, data: rule }
+    const enrichedRule = {
+      ...rule,
+      templateConfig: {
+        campaignId: campaign.id,
+        subject: tpl.subject,
+        bodyText: tpl.bodyText,
+        bannerUrl: ""
+      },
+      metrics: {
+        entered: 0,
+        completed: 0,
+        active: 0,
+        exited: 0,
+        openRate: 0,
+        clickRate: 0,
+        conversionRate: 0,
+        exitRate: 0
+      }
+    }
+
+    return { success: true, data: enrichedRule }
   } catch (error) {
     return handleActionError(error, "Failed to create workflow")
   }
@@ -414,5 +460,91 @@ export async function toggleAutomationStatus(id: string) {
     return { success: true, data: updated }
   } catch (error) {
     return handleActionError(error, "Failed to modify workflow state")
+  }
+}
+
+// Save inline template settings for any automation (like birthday card experience)
+export async function saveAutomationTemplate(
+  automationId: string,
+  subject: string,
+  bodyText: string,
+  bannerUrl: string | null,
+  enabled: boolean,
+  sendDate?: string | null,
+  sendTime?: string | null
+) {
+  try {
+    const { organizationId } = await enforceWorkspaceEditor()
+
+    // 1. Verify automation ownership
+    const rule = await prisma.automationRule.findFirst({
+      where: { id: automationId, organizationId }
+    })
+    if (!rule) return { success: false, error: "Workflow not found" }
+
+    // 2. Find linked campaign ID from the automation nodes
+    const nodes = (rule.nodes as any[]) || []
+    const actionNode = nodes.find(
+      n => n.type === "actionNode" && n.data?.actionType === "SEND_EMAIL" && n.data?.campaignId
+    )
+    
+    if (!actionNode?.data?.campaignId) {
+      return { success: false, error: "No email template linked to this automation" }
+    }
+
+    const campaignId = actionNode.data.campaignId as string
+
+    // 3. Build the HTML email from the simple fields
+    const tpl = getTemplateDefaults(rule.triggerType, rule.name)
+    const htmlContent = buildAutomationEmailHtml(
+      subject,
+      bodyText,
+      tpl.accentFrom,
+      tpl.accentTo,
+      tpl.emoji
+    )
+
+    // 4. Update the campaign template
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        subject,
+        htmlContent,
+        designContent: { subject, bodyText, bannerUrl: bannerUrl || "" } as any
+      }
+    })
+
+    // 5. Update automation active state and trigger date/time config
+    const currentConfig = (rule.triggerConfig as any) || {}
+    const updated = await prisma.automationRule.update({
+      where: { id: automationId },
+      data: {
+        isActive: enabled,
+        triggerConfig: {
+          ...currentConfig,
+          sendDate: sendDate !== undefined ? sendDate : (currentConfig.sendDate || null),
+          sendTime: sendTime !== undefined ? sendTime : (currentConfig.sendTime || "09:00")
+        }
+      }
+    })
+
+    await logActivity(
+      `Updated automation "${rule.name}" template settings and ${enabled ? "activated" : "paused"}`,
+      "SETTINGS"
+    )
+
+    const enrichedRule = {
+      ...updated,
+      templateConfig: {
+        campaignId,
+        subject,
+        bodyText,
+        bannerUrl: bannerUrl || ""
+      }
+    }
+
+    return { success: true, data: enrichedRule }
+  } catch (error) {
+    return handleActionError(error, "Failed to save automation template settings")
   }
 }

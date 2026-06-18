@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4 p-4 md:p-6 w-full max-w-full overflow-hidden">
       
       {/* Live Stats Ticker Bar */}
       <div className="w-full bg-slate-900 dark:bg-slate-950 text-slate-100 text-xs py-2 px-3 rounded-lg border border-slate-800 shadow-md flex items-center overflow-hidden gap-6 select-none">
@@ -226,7 +226,7 @@ export default async function DashboardPage() {
       {/* Main Grid: Charts & Activities */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
         {/* Engagement Overview Chart */}
-        <Card className="col-span-1 lg:col-span-4 shadow-sm border">
+        <Card className="col-span-1 lg:col-span-4 shadow-sm border min-w-0 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
               <CardTitle className="text-lg font-bold">Engagement Over Time</CardTitle>

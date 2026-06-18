@@ -246,7 +246,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   />
                 }
               >
-                <div className="bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-md">
+                <div className="bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-500 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-lg">
                   <Building2 className="size-4 animate-pulse" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { registerUser } from "@/app/actions/register"
 import { toast } from "sonner"
-import { Loader2, Sparkles, Building2, User2, Mail, Lock } from "lucide-react"
+import { Loader2, Sparkles, Building2, User2, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 
 export default function SignupPage() {
@@ -19,6 +19,7 @@ export default function SignupPage() {
     password: "",
     workspaceName: "",
   })
+  const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,16 +116,30 @@ export default function SignupPage() {
               <Label htmlFor="password" className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
                 <Lock className="h-3.5 w-3.5 text-indigo-500" /> Password
               </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                disabled={isLoading}
-                className="h-10"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  disabled={isLoading}
+                  className="h-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <Button 

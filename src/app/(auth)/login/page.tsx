@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 import Link from "next/link"
 
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = React.useState("admin@acme.com")
   const [password, setPassword] = React.useState("password")
+  const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -79,14 +80,29 @@ export default function LoginPage() {
                   Forgot?
                 </Link>
               </div>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full h-10 font-semibold" disabled={isLoading}>
               {isLoading ? (

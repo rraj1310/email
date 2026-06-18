@@ -677,9 +677,6 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
                       .replace(/\{\{email\}\}/g, "john.doe@client.com")
                   }}
                 />
-                <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-2 border-t">
-                  Sent automatically on your special day.
-                </div>
               </div>
 
               {/* Footer */}

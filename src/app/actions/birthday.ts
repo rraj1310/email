@@ -451,9 +451,6 @@ function buildBirthdayEmailHtml(subject: string, bodyText: string, bannerUrl: st
         <div class="message">
           \${formattedBody}
         </div>
-        <div class="tag-note">
-          Sent automatically on your special day.
-        </div>
       </div>
       <div class="footer">
         © \${new Date().getFullYear()} Workspace Automations. All rights reserved.

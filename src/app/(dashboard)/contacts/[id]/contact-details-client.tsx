@@ -13,8 +13,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Contact, Tag } from "@prisma/client"
-import { updateContact, deleteContact } from "@/app/actions/contacts"
+import { updateContact, deleteContact, getTags } from "@/app/actions/contacts"
 import { toast } from "sonner"
+import { TagsSelector, getTagColorClass } from "@/components/contacts/tags-selector"
+import { CountrySelector } from "@/components/contacts/country-selector"
 
 type ContactWithTags = Contact & { tags: Tag[] }
 
@@ -52,8 +54,19 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
   const [editCity, setEditCity] = React.useState(contact.city || "")
   const [editCountry, setEditCountry] = React.useState(contact.country || "")
   const [editStatus, setEditStatus] = React.useState(contact.status)
-  const [editTagsString, setEditTagsString] = React.useState(contact.tags.map(t => t.name).join(", "))
+  const [editTags, setEditTags] = React.useState<string[]>(contact.tags.map(t => t.name))
   const [editBirthday, setEditBirthday] = React.useState(contact.birthday ? new Date(contact.birthday).toISOString().split("T")[0] : "")
+  const [availableTags, setAvailableTags] = React.useState<string[]>([])
+
+  React.useEffect(() => {
+    async function loadTags() {
+      const res = await getTags()
+      if (res.success && res.data) {
+        setAvailableTags(res.data.map(t => t.name))
+      }
+    }
+    loadTags()
+  }, [])
 
   // Parsed custom fields
   const customFieldsObj = React.useMemo(() => {
@@ -71,11 +84,6 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
     e.preventDefault()
     setIsSaving(true)
     try {
-      const parsedTags = editTagsString
-        .split(",")
-        .map(t => t.trim())
-        .filter(Boolean)
-
       const result = await updateContact(contact.id, {
         firstName: editFirstName,
         lastName: editLastName,
@@ -84,7 +92,7 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
         country: editCountry,
         birthday: editBirthday || null,
         status: editStatus,
-        tags: parsedTags
+        tags: editTags
       })
 
       if (result.success && result.data) {
@@ -98,6 +106,7 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
         setEditCountry(resData.country || "")
         setEditBirthday(resData.birthday ? new Date(resData.birthday).toISOString().split("T")[0] : "")
         setEditStatus(resData.status)
+        setEditTags(resData.tags.map(t => t.name))
         setIsEditOpen(false)
       } else {
         toast.error(result.error || "Failed to update contact details.")
@@ -188,47 +197,47 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
                         onChange={(e) => setEditCity(e.target.value)} 
                       />
                     </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="editCountry" className="text-xs font-semibold">Country</Label>
-                      <Input 
-                        id="editCountry" 
-                        value={editCountry} 
-                        onChange={(e) => setEditCountry(e.target.value)} 
-                      />
-                    </div>
-                  </div>
+                     <div className="grid gap-1.5">
+                       <Label htmlFor="editCountry" className="text-xs font-semibold">Country</Label>
+                       <CountrySelector 
+                         id="editCountry" 
+                         value={editCountry} 
+                         onChange={setEditCountry} 
+                       />
+                     </div>
+                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="editStatus" className="text-xs font-semibold">Status</Label>
-                      <select 
-                        id="editStatus" 
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                        value={editStatus}
-                        onChange={(e) => setEditStatus(e.target.value as any)}
-                      >
-                        <option value="ACTIVE">Active</option>
-                        <option value="UNSUBSCRIBED">Unsubscribed</option>
-                        <option value="BOUNCED">Bounced</option>
-                      </select>
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="editBirthday" className="text-xs font-semibold">Birthday</Label>
-                      <Input 
-                        id="editBirthday" 
-                        type="date"
-                        value={editBirthday} 
-                        onChange={(e) => setEditBirthday(e.target.value)} 
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="editTags" className="text-xs font-semibold">Tags (Comma-separated)</Label>
-                      <Input 
-                        id="editTags" 
-                        value={editTagsString} 
-                        onChange={(e) => setEditTagsString(e.target.value)} 
-                      />
-                    </div>
-                  </div>
+                     <div className="grid gap-1.5">
+                       <Label htmlFor="editStatus" className="text-xs font-semibold">Status</Label>
+                       <select 
+                         id="editStatus" 
+                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                         value={editStatus}
+                         onChange={(e) => setEditStatus(e.target.value as any)}
+                       >
+                         <option value="ACTIVE">Active</option>
+                         <option value="UNSUBSCRIBED">Unsubscribed</option>
+                         <option value="BOUNCED">Bounced</option>
+                       </select>
+                     </div>
+                     <div className="grid gap-1.5">
+                       <Label htmlFor="editBirthday" className="text-xs font-semibold">Birthday</Label>
+                       <Input 
+                         id="editBirthday" 
+                         type="date"
+                         value={editBirthday} 
+                         onChange={(e) => setEditBirthday(e.target.value)} 
+                       />
+                     </div>
+                   </div>
+                   <div className="grid gap-1.5">
+                     <Label className="text-xs font-semibold">Contact Tags</Label>
+                     <TagsSelector 
+                       selectedTags={editTags} 
+                       onChange={setEditTags} 
+                       availableTags={availableTags} 
+                     />
+                   </div>
                 </div>
 
                 <DialogFooter className="mt-6 pt-4 border-t">
@@ -292,7 +301,7 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
                 </h4>
                 <div className="flex gap-1.5 flex-wrap">
                   {contact.tags?.map((tag) => (
-                    <Badge key={tag.id} variant="outline" className="text-[10px] bg-muted/40 py-0.5 px-2">
+                    <Badge key={tag.id} variant="outline" className={`text-[10px] font-semibold py-0.5 px-2 border transition-all duration-200 hover:scale-[1.02] shadow-xs ${getTagColorClass(tag.name)}`}>
                       {tag.name}
                     </Badge>
                   ))}

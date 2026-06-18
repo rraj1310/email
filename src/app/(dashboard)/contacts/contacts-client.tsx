@@ -42,10 +42,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Plus, Search, Filter, Download, Upload, User, Trash2, Mail, ExternalLink, Sparkles, Check } from "lucide-react"
 import { Contact, Tag } from "@prisma/client"
-import { createContact, deleteContact } from "@/app/actions/contacts"
+import { createContact, deleteContact, getTags } from "@/app/actions/contacts"
 import { generateSegmentRules } from "@/app/actions/copilot"
 import { toast } from "sonner"
 import Papa from "papaparse"
+import { TagsSelector, getTagColorClass } from "@/components/contacts/tags-selector"
+import { CountrySelector } from "@/components/contacts/country-selector"
 
 type ContactWithTags = Contact & { tags: Tag[] }
 
@@ -71,8 +73,19 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
   const [newCity, setNewCity] = React.useState("")
   const [newCountry, setNewCountry] = React.useState("")
   const [newStatus, setNewStatus] = React.useState("ACTIVE")
-  const [newTagsString, setNewTagsString] = React.useState("")
+  const [newTags, setNewTags] = React.useState<string[]>([])
   const [newBirthday, setNewBirthday] = React.useState("")
+  const [availableTags, setAvailableTags] = React.useState<string[]>([])
+
+  React.useEffect(() => {
+    async function loadTags() {
+      const res = await getTags()
+      if (res.success && res.data) {
+        setAvailableTags(res.data.map(t => t.name))
+      }
+    }
+    loadTags()
+  }, [])
 
   // Filter contacts by query + advanced segments
   const filteredContacts = React.useMemo(() => {
@@ -144,11 +157,6 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
 
     setIsSaving(true)
     try {
-      const parsedTags = newTagsString
-        .split(",")
-        .map(t => t.trim())
-        .filter(Boolean)
-
       const result = await createContact({
         email: newEmail,
         firstName: newFirstName,
@@ -158,7 +166,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         country: newCountry,
         birthday: newBirthday || null,
         status: newStatus,
-        tags: parsedTags
+        tags: newTags
       })
 
       if (result.success && result.data) {
@@ -173,7 +181,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         setNewCity("")
         setNewCountry("")
         setNewStatus("ACTIVE")
-        setNewTagsString("")
+        setNewTags([])
         setNewBirthday("")
         setIsAddOpen(false)
       } else {
@@ -332,24 +340,23 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                     </div>
                     <div className="grid gap-1.5">
                       <Label htmlFor="country" className="text-xs font-semibold">Country</Label>
-                      <Input 
+                      <CountrySelector 
                         id="country" 
-                        placeholder="United States" 
                         value={newCountry} 
-                        onChange={(e) => setNewCountry(e.target.value)} 
+                        onChange={setNewCountry} 
                       />
                     </div>
                   </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="birthday" className="text-xs font-semibold">Birthday</Label>
-                    <Input 
-                      id="birthday" 
-                      type="date"
-                      value={newBirthday} 
-                      onChange={(e) => setNewBirthday(e.target.value)} 
-                    />
-                  </div>
                   <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="birthday" className="text-xs font-semibold">Birthday</Label>
+                      <Input 
+                        id="birthday" 
+                        type="date"
+                        value={newBirthday} 
+                        onChange={(e) => setNewBirthday(e.target.value)} 
+                      />
+                    </div>
                     <div className="grid gap-1.5">
                       <Label htmlFor="status" className="text-xs font-semibold">Status</Label>
                       <select 
@@ -363,15 +370,14 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                         <option value="BOUNCED">Bounced</option>
                       </select>
                     </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="tags" className="text-xs font-semibold">Tags (Comma-separated)</Label>
-                      <Input 
-                        id="tags" 
-                        placeholder="VIP, Leads, Partner" 
-                        value={newTagsString} 
-                        onChange={(e) => setNewTagsString(e.target.value)} 
-                      />
-                    </div>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label className="text-xs font-semibold">Contact Tags</Label>
+                    <TagsSelector 
+                      selectedTags={newTags} 
+                      onChange={setNewTags} 
+                      availableTags={availableTags} 
+                    />
                   </div>
                 </div>
 
@@ -522,7 +528,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {contact.tags.map((tag: Tag) => (
-                        <Badge key={tag.id} variant="outline" className="text-[10px] font-medium bg-muted/40 py-0.5 px-1.5">
+                        <Badge key={tag.id} variant="outline" className={`text-[10px] font-semibold py-0.5 px-1.5 border transition-all duration-200 hover:scale-[1.02] shadow-xs ${getTagColorClass(tag.name)}`}>
                           {tag.name}
                         </Badge>
                       ))}
@@ -627,7 +633,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                 
                 <div className="flex flex-wrap gap-1 max-w-[65%] justify-end">
                   {contact.tags.map((tag: Tag) => (
-                    <Badge key={tag.id} variant="outline" className="text-[9px] px-1.5 py-0 bg-muted/40">
+                    <Badge key={tag.id} variant="outline" className={`text-[9px] px-1.5 py-0 border transition-all duration-200 hover:scale-[1.02] shadow-xs ${getTagColorClass(tag.name)}`}>
                       {tag.name}
                     </Badge>
                   ))}

@@ -18,6 +18,7 @@ import {
   Building2,
   Check,
   Loader2,
+  LogOut,
 } from "lucide-react"
 
 import {
@@ -32,6 +33,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import { signOut } from "next-auth/react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -342,6 +344,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <span>Help & Settings</span>
               </SidebarMenuButton>
             </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={() => signOut({ callbackUrl: "/login" })} 
+              className="hover:bg-rose-500/10 dark:hover:bg-rose-950/30 text-muted-foreground hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+            >
+              <LogOut className="size-4" />
+              <span>Log Out</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

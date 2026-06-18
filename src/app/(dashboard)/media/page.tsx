@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getMediaFiles } from "@/app/actions/media"
 import { MediaClient } from "./media-client"
 

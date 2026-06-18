@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getContacts } from "@/app/actions/contacts"
 import { ContactsClient } from "./contacts-client"
 

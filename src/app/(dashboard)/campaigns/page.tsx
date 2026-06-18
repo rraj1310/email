@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getCampaigns } from "@/app/actions/campaigns"
 import { CampaignsClient } from "./campaigns-client"
 

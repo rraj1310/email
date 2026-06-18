@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getAutomationById } from "@/app/actions/automations"
 import { getCampaigns } from "@/app/actions/campaigns"
 import AutomationsEditor from "@/components/automations/automations-editor"

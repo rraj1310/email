@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getDashboardStats } from "@/app/actions/dashboard"
 import { getEngagementTrends, getSendTimeRecommendations } from "@/app/actions/copilot"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"

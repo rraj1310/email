@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getDashboardStats } from "@/app/actions/dashboard"
 import { getCampaigns } from "@/app/actions/campaigns"
 import { ReportsClient } from "./reports-client"

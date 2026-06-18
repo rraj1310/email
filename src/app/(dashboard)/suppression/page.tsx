@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getSuppressionList, getSuppressionStats } from "@/app/actions/suppression"
 import { SuppressionClient } from "./suppression-client"
 

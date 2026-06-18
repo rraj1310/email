@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getContactById } from "@/app/actions/contacts"
 import { notFound } from "next/navigation"
 import { ContactDetailsClient } from "./contact-details-client"

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getAutomations } from "@/app/actions/automations"
 import { getBirthdaySettings } from "@/app/actions/birthday"
 import { AutomationsClient } from "./automations-client"

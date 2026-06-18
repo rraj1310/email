@@ -14,8 +14,8 @@ import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = React.useState("admin@acme.com")
-  const [password, setPassword] = React.useState("password")
+  const [email, setEmail] = React.useState("test@mail.com")
+  const [password, setPassword] = React.useState("test@#12")
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 
@@ -66,7 +66,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@acme.com"
+                placeholder="test@mail.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -165,24 +165,24 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Automations</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">Trading Bots (Automations)</h2>
           <p className="text-muted-foreground text-sm">
-            Build event-driven email workflows to message your audience dynamically.
+            Deploy event-driven triggers that run in the background (like welcome bots or birthday cards).
           </p>
         </div>
 
         {/* Create Automation Dialog Trigger */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger render={<Button className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium" />}>
+          <DialogTrigger render={<Button className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer" />}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Create Workflow
+            Deploy Bot (Workflow)
           </DialogTrigger>
           <DialogContent className="sm:max-w-[400px]">
             <form onSubmit={handleCreate}>
               <DialogHeader className="pb-3 border-b mb-4">
-                <DialogTitle className="text-lg font-bold">New Automation Workflow</DialogTitle>
+                <DialogTitle className="text-lg font-bold">New Automation Bot</DialogTitle>
                 <DialogDescription className="text-xs">
-                  Trigger emails automatically based on user events.
+                  Trigger automated messages automatically based on portfolio triggers.
                 </DialogDescription>
               </DialogHeader>
 
@@ -219,8 +219,8 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
                 <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)} disabled={isSaving} className="text-xs h-9">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-blue-600 hover:bg-blue-700 text-white">
-                  {isSaving ? "Creating..." : "Create Workflow"}
+                <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+                  {isSaving ? "Deploying..." : "Deploy Bot"}
                 </Button>
               </DialogFooter>
             </form>

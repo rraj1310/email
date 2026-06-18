@@ -59,42 +59,50 @@ import { useRouter } from "next/navigation"
 const data = {
   navMain: [
     {
-      title: "Dashboard",
+      title: "Trading Floor",
+      description: "Overview stats & activity feed",
       url: "/",
       icon: PieChart,
     },
     {
-      title: "Contacts",
+      title: "Portfolio Base",
+      description: "Manage & tag subscribers",
       url: "/contacts",
       icon: Users,
     },
     {
-      title: "Campaigns",
+      title: "Trade Execution",
+      description: "Draft & send bulk emails",
       url: "/campaigns",
       icon: Megaphone,
     },
     {
-      title: "Automations",
+      title: "Trading Bots",
+      description: "Automate birthday & welcome emails",
       url: "/automations",
       icon: Bot,
     },
     {
-      title: "Media Library",
+      title: "Assets Vault",
+      description: "Store newsletter media & files",
       url: "/media",
       icon: ImageIcon,
     },
     {
-      title: "Suppression",
+      title: "Risk Guard",
+      description: "Unsubscribe & blocklist filters",
       url: "/suppression",
       icon: ShieldAlert,
     },
     {
-      title: "Reports",
+      title: "Yield Ledger",
+      description: "Campaign click & open charts",
       url: "/reports",
       icon: BarChart,
     },
     {
-      title: "Settings",
+      title: "Terminal Config",
+      description: "Workspace branding & settings",
       url: "/settings",
       icon: Settings2,
     },
@@ -238,7 +246,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   />
                 }
               >
-                <div className="bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-md">
+                <div className="bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-md">
                   <Building2 className="size-4 animate-pulse" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -246,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {activeWorkspace?.name || orgName}
                   </span>
                   <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
-                    {activeWorkspace?.plan ? `${activeWorkspace.plan} Plan` : "Email Marketing Hub"}
+                    {activeWorkspace?.plan ? `${activeWorkspace.plan} Plan` : "Stock Market Terminal"}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
@@ -305,14 +313,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuButton 
                     tooltip={item.title} 
                     isActive={isActive}
-                    className={`transition-all duration-200 ${
+                    className={`transition-all duration-200 py-6 h-auto ${
                       isActive 
                         ? "bg-primary text-primary-foreground font-semibold shadow-sm scale-[1.02]" 
                         : "hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <item.icon className={`size-4 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
-                    <span>{item.title}</span>
+                    <item.icon className={`size-4.5 shrink-0 mt-0.5 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                    <div className="flex flex-col text-left leading-normal">
+                      <span className="text-sm font-semibold">{item.title}</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal leading-tight group-data-[collapsible=icon]:hidden">{item.description}</span>
+                    </div>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>

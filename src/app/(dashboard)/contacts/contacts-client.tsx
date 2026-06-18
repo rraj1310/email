@@ -40,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Plus, Search, Filter, Download, Upload, User, Trash2, Mail, ExternalLink, Sparkles, Check } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Filter, Download, Upload, User, Trash2, Mail, ExternalLink, Sparkles, Check, X } from "lucide-react"
 import { Contact, Tag } from "@prisma/client"
 import { createContact, deleteContact, getTags } from "@/app/actions/contacts"
 import { generateSegmentRules } from "@/app/actions/copilot"
@@ -75,6 +75,9 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
   const [newStatus, setNewStatus] = React.useState("ACTIVE")
   const [newTags, setNewTags] = React.useState<string[]>([])
   const [newBirthday, setNewBirthday] = React.useState("")
+  const [newAvatarUrl, setNewAvatarUrl] = React.useState("")
+  const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false)
+  const [lightboxPhotoUrl, setLightboxPhotoUrl] = React.useState<string | null>(null)
   const [availableTags, setAvailableTags] = React.useState<string[]>([])
 
   React.useEffect(() => {
@@ -165,6 +168,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         city: newCity,
         country: newCountry,
         birthday: newBirthday || null,
+        avatarUrl: newAvatarUrl || null,
         status: newStatus,
         tags: newTags
       })
@@ -183,6 +187,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         setNewStatus("ACTIVE")
         setNewTags([])
         setNewBirthday("")
+        setNewAvatarUrl("")
         setIsAddOpen(false)
       } else {
         toast.error(result.error || "Failed to create contact")
@@ -255,9 +260,9 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Contacts</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">Portfolio Base (Contacts)</h2>
           <p className="text-muted-foreground text-sm">
-            Manage your subscribers, organize tags, and build custom filters.
+            Manage your subscriber portfolio, organize filter segments, and customize tags.
           </p>
         </div>
         
@@ -288,6 +293,81 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                 </DialogHeader>
 
                 <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                  {/* Profile Photo Upload */}
+                  <div className="flex items-center gap-4 p-3 border rounded-lg bg-muted/20">
+                    <div className="relative h-16 w-16 rounded-full border bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden shrink-0 shadow-inner group">
+                      {newAvatarUrl ? (
+                        <img src={newAvatarUrl} alt="Avatar Preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      )}
+                      {isUploadingAvatar && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs font-semibold">Profile Photo</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="avatar-upload"
+                          disabled={isUploadingAvatar}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            setIsUploadingAvatar(true)
+                            const formData = new FormData()
+                            formData.append("file", file)
+                            try {
+                              const res = await fetch("/api/contacts/upload", {
+                                method: "POST",
+                                body: formData
+                              })
+                              const result = await res.json()
+                              if (result.success && result.url) {
+                                setNewAvatarUrl(result.url)
+                                toast.success("Profile photo uploaded to Cloudinary!")
+                              } else {
+                                toast.error(result.error || "Failed to upload photo")
+                              }
+                            } catch (err) {
+                              toast.error("Upload error")
+                            } finally {
+                              setIsUploadingAvatar(false)
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs font-medium border-slate-200 cursor-pointer"
+                          onClick={() => document.getElementById("avatar-upload")?.click()}
+                          disabled={isUploadingAvatar}
+                        >
+                          {newAvatarUrl ? "Change Photo" : "Upload Photo"}
+                        </Button>
+                        {newAvatarUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
+                            onClick={() => setNewAvatarUrl("")}
+                            disabled={isUploadingAvatar}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">JPG, PNG up to 5MB. Hosted securely on Cloudinary.</p>
+                    </div>
+                  </div>
+
                   <div className="grid gap-1.5">
                     <Label htmlFor="email" className="text-xs font-semibold">Email Address *</Label>
                     <Input 
@@ -504,8 +584,19 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                 <TableRow key={contact.id} className="hover:bg-muted/10 transition-colors">
                   <TableCell className="font-semibold text-foreground py-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                        {(contact.firstName?.[0] || contact.email[0]).toUpperCase()}
+                      <div 
+                        className={`h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 overflow-hidden shrink-0 border border-slate-200/50 shadow-xs ${contact.avatarUrl ? 'cursor-zoom-in hover:scale-105 transition-transform' : ''}`}
+                        onClick={() => {
+                          if (contact.avatarUrl) {
+                            setLightboxPhotoUrl(contact.avatarUrl)
+                          }
+                        }}
+                      >
+                        {contact.avatarUrl ? (
+                          <img src={contact.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          (contact.firstName?.[0] || contact.email[0]).toUpperCase()
+                        )}
                       </div>
                       <span>
                         {[contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—"}
@@ -580,8 +671,19 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
             <div key={contact.id} className="p-4 flex flex-col gap-3 hover:bg-muted/10 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                    {(contact.firstName?.[0] || contact.email[0]).toUpperCase()}
+                  <div 
+                    className={`h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 overflow-hidden shrink-0 border border-slate-200/50 shadow-xs ${contact.avatarUrl ? 'cursor-zoom-in hover:scale-105 transition-transform' : ''}`}
+                    onClick={() => {
+                      if (contact.avatarUrl) {
+                        setLightboxPhotoUrl(contact.avatarUrl)
+                      }
+                    }}
+                  >
+                    {contact.avatarUrl ? (
+                      <img src={contact.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      (contact.firstName?.[0] || contact.email[0]).toUpperCase()
+                    )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-sm text-foreground">
@@ -651,6 +753,30 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         </div>
 
       </div>
+
+      {/* Fullscreen Photo Lightbox Overlay */}
+      {lightboxPhotoUrl && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in-0 duration-200 cursor-zoom-out"
+          onClick={() => setLightboxPhotoUrl(null)}
+        >
+          <button 
+            type="button"
+            className="absolute top-4 right-4 text-white/85 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all focus:outline-none cursor-pointer"
+            onClick={() => setLightboxPhotoUrl(null)}
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-lg shadow-2xl border border-white/10 bg-slate-950 flex items-center justify-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={lightboxPhotoUrl} 
+              alt="Profile Lightbox" 
+              className="max-w-full max-h-[85vh] object-contain select-none cursor-zoom-out"
+              onClick={() => setLightboxPhotoUrl(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

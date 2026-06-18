@@ -172,6 +172,7 @@ model Contact {
   city           String?
   country        String?
   birthday       DateTime?
+  avatarUrl      String?
   
   status         ContactStatus @default(ACTIVE)
   customFields   Json          @default("{}")

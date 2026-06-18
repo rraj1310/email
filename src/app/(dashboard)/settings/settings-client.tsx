@@ -454,7 +454,7 @@ export function SettingsClient({ organization, users }: SettingsClientProps) {
                   <CardTitle className="text-lg font-bold">Active Members</CardTitle>
                   <CardDescription className="text-xs">Users currently assigned to this workspace.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-x-auto">
                   <Table>
                     <TableHeader className="bg-muted/30">
                       <TableRow>
@@ -505,7 +505,7 @@ export function SettingsClient({ organization, users }: SettingsClientProps) {
                     <CardTitle className="text-lg font-bold">Pending Invitations</CardTitle>
                     <CardDescription className="text-xs">Invited users who haven&apos;t joined yet.</CardDescription>
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent className="p-0 overflow-x-auto">
                     <Table>
                       <TableHeader className="bg-muted/30">
                         <TableRow>

@@ -194,9 +194,9 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Main Grid: Charts & Activities */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
         {/* Engagement Overview Chart */}
-        <Card className="col-span-4 shadow-sm border">
+        <Card className="col-span-1 lg:col-span-4 shadow-sm border">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
               <CardTitle className="text-lg font-bold">Engagement Trends</CardTitle>
@@ -214,7 +214,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Recent Activity Timeline */}
-        <Card className="col-span-3 shadow-sm border bg-card/60 backdrop-blur-xs">
+        <Card className="col-span-1 lg:col-span-3 shadow-sm border bg-card/60 backdrop-blur-xs">
           <CardHeader className="pb-4 border-b">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <Activity className="h-4 w-4 text-blue-500" />

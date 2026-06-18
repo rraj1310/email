@@ -44,6 +44,69 @@ export default function DashboardLayout({
           <div className="absolute top-[-5%] left-[15%] w-[450px] h-[450px] bg-emerald-500/10 dark:bg-emerald-500/15 rounded-full blur-[130px] pointer-events-none -z-10 ambient-orb-1" />
           <div className="absolute bottom-[-5%] right-[5%] w-[400px] h-[400px] bg-blue-600/10 dark:bg-blue-600/15 rounded-full blur-[110px] pointer-events-none -z-10 ambient-orb-2" />
           <div className="absolute top-[40%] right-[30%] w-[350px] h-[350px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none -z-10 ambient-orb-3" />
+
+          {/* Stock Market Dynamic Animated Chart Background */}
+          <div className="absolute inset-0 pointer-events-none -z-20 opacity-[0.25] dark:opacity-[0.35] overflow-hidden">
+            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 800" preserveAspectRatio="none">
+              {/* Gradients */}
+              <defs>
+                <linearGradient id="chart-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.1" />
+                  <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.8" />
+                </linearGradient>
+              </defs>
+
+              {/* Rising bull market trendline */}
+              <path
+                d="M 0,700 Q 200,620 400,580 T 800,450 T 1200,320 T 1600,220 T 1920,100"
+                fill="none"
+                stroke="url(#chart-gradient)"
+                strokeWidth="4"
+              />
+              
+              {/* Secondary faint chart index line */}
+              <path
+                d="M 0,720 Q 250,650 500,590 T 1000,480 T 1500,350 T 1920,200"
+                fill="none"
+                stroke="#10b981"
+                strokeOpacity="0.25"
+                strokeWidth="2"
+                strokeDasharray="6,6"
+              />
+
+              {/* Animated glowing stock index pointer circles */}
+              <circle r="7" fill="#10b981" filter="drop-shadow(0 0 8px #10b981)">
+                <animateMotion
+                  path="M 0,700 Q 200,620 400,580 T 800,450 T 1200,320 T 1600,220 T 1920,100"
+                  dur="15s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+              
+              <circle r="5" fill="#3b82f6" filter="drop-shadow(0 0 6px #3b82f6)">
+                <animateMotion
+                  path="M 0,720 Q 250,650 500,590 T 1000,480 T 1500,350 T 1920,200"
+                  dur="22s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            </svg>
+            
+            {/* Candle Bars (dynamic stock market illustration) */}
+            <div className="absolute bottom-4 left-0 right-0 h-32 flex items-end justify-between px-6 gap-[3px] opacity-15 dark:opacity-20 select-none">
+              {Array.from({ length: 70 }).map((_, i) => {
+                const height = 15 + Math.sin(i * 0.3) * 12 + Math.cos(i * 0.7) * 8 + (i * 0.4);
+                const isGreen = (i * 3 + 1) % 5 !== 0;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                    <div className={`w-[1px] h-full ${isGreen ? "bg-emerald-500" : "bg-rose-500"}`} style={{ height: `${height + 10}px` }} />
+                    <div className={`w-1 rounded-xs ${isGreen ? "bg-emerald-500" : "bg-rose-500"}`} style={{ height: `${height}px` }} />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
           {children}
         </div>
       </SidebarInset>

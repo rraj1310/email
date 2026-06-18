@@ -99,11 +99,10 @@ export default async function DashboardPage() {
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="pt-1 pb-4">
             <div className="text-3xl font-bold tracking-tight">{stats.totalContacts.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <TrendingUp className="h-3.5 w-3.5 text-emerald-500 inline" />
-              Total active contacts in your workspace
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Active subscriber base
             </p>
           </CardContent>
         </Card>
@@ -119,14 +118,55 @@ export default async function DashboardPage() {
               <Mail className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="pt-1 pb-4">
             <div className="text-3xl font-bold tracking-tight">{stats.totalSent.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              Total emails dispatched across all campaigns
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Total campaign dispatches
             </p>
           </CardContent>
         </Card>
 
+        {/* Avg Open Rate */}
+        <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-purple-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
+              Avg Open Rate
+            </CardTitle>
+            <div className="p-1.5 bg-violet-500/10 text-violet-500 rounded-md">
+              <TrendingUp className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-1 pb-4">
+            <div className="text-3xl font-bold tracking-tight">{stats.openRate}%</div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Recipient engagement rate
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Suppressed Contacts */}
+        <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-amber-500 to-orange-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
+              Suppressed
+            </CardTitle>
+            <div className="p-1.5 bg-amber-500/10 text-amber-500 rounded-md">
+              <ShieldAlert className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-1 pb-4">
+            <div className="text-3xl font-bold tracking-tight">{stats.totalSuppressed.toLocaleString()}</div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Bounced or unsubscribed
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Automations & Quick Actions Section */}
+      <div className="grid gap-4 md:grid-cols-2 animate-stagger-3">
         <DashboardCards 
           initialEnabled={birthdaySettings.birthdayAutomationEnabled}
           emailTime={birthdaySettings.birthdayEmailTime}

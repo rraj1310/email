@@ -97,13 +97,48 @@ export async function createAutomation(name: string, triggerType: string) {
   try {
     const { organizationId } = await enforceWorkspaceEditor()
 
-    // Default trigger configs
+    // Get trigger labels for clean displaying
+    const triggerLabels: Record<string, string> = {
+      NEW_CONTACT: "When: Contact Created",
+      TAG_ADDED: "When: Tag Added",
+      CAMPAIGN_OPENED: "When: Campaign Opened",
+      LINK_CLICKED: "When: Link Clicked",
+      BIRTHDAY: "When: Contact's Birthday"
+    }
+
+    const triggerLabel = triggerLabels[triggerType] || `Trigger: ${triggerType}`
+
+    // Default trigger and connected action node configs to make it simple for non-tech users
     const initialNodes = [
       {
         id: "trigger-node",
         type: "triggerNode",
         position: { x: 250, y: 100 },
-        data: { label: `Trigger: ${triggerType}`, type: triggerType, config: {} }
+        data: { label: triggerLabel, type: triggerType, config: {} }
+      },
+      {
+        id: "action-node-1",
+        type: "actionNode",
+        position: { x: 250, y: 280 },
+        data: { actionType: "SEND_EMAIL", label: "Send Email Campaign", campaignId: "" }
+      }
+    ]
+
+    const initialEdges = [
+      {
+        id: "e-trigger-action",
+        source: "trigger-node",
+        target: "action-node-1"
+      }
+    ]
+
+    const actionsJson = [
+      {
+        nodeId: "action-node-1",
+        actionType: "SEND_EMAIL",
+        campaignId: "",
+        waitDays: 0,
+        tagName: ""
       }
     ]
 
@@ -112,9 +147,9 @@ export async function createAutomation(name: string, triggerType: string) {
         name,
         triggerType: triggerType as any,
         triggerConfig: { status: "ACTIVE", description: `Triggered when ${triggerType.toLowerCase()}` },
-        actions: [],
+        actions: actionsJson,
         nodes: initialNodes,
-        edges: [],
+        edges: initialEdges,
         isActive: false,
         organizationId
       }

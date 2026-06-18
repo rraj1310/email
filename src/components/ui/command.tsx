@@ -60,7 +60,9 @@ function CommandDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        {children}
+        <Command className="flex size-full flex-col overflow-hidden bg-popover text-popover-foreground">
+          {children}
+        </Command>
       </DialogContent>
     </Dialog>
   )

@@ -59,35 +59,35 @@ export default function DashboardLayout({
 
               {/* Rising bull market trendline */}
               <path
-                d="M 0,700 Q 200,620 400,580 T 800,450 T 1200,320 T 1600,220 T 1920,100"
+                d="M 0,720 Q 300,700 600,730 T 1200,680 T 1600,710 T 1920,670"
                 fill="none"
                 stroke="url(#chart-gradient)"
-                strokeWidth="4"
+                strokeWidth="3"
               />
               
               {/* Secondary faint chart index line */}
               <path
-                d="M 0,720 Q 250,650 500,590 T 1000,480 T 1500,350 T 1920,200"
+                d="M 0,735 Q 350,715 700,745 T 1400,695 T 1920,710"
                 fill="none"
                 stroke="#10b981"
-                strokeOpacity="0.25"
-                strokeWidth="2"
+                strokeOpacity="0.2"
+                strokeWidth="1.5"
                 strokeDasharray="6,6"
               />
 
               {/* Animated glowing stock index pointer circles */}
-              <circle r="7" fill="#10b981" filter="drop-shadow(0 0 8px #10b981)">
+              <circle r="5" fill="#10b981" filter="drop-shadow(0 0 5px #10b981)">
                 <animateMotion
-                  path="M 0,700 Q 200,620 400,580 T 800,450 T 1200,320 T 1600,220 T 1920,100"
-                  dur="15s"
+                  path="M 0,720 Q 300,700 600,730 T 1200,680 T 1600,710 T 1920,670"
+                  dur="20s"
                   repeatCount="indefinite"
                 />
               </circle>
               
-              <circle r="5" fill="#3b82f6" filter="drop-shadow(0 0 6px #3b82f6)">
+              <circle r="4" fill="#3b82f6" filter="drop-shadow(0 0 4px #3b82f6)">
                 <animateMotion
-                  path="M 0,720 Q 250,650 500,590 T 1000,480 T 1500,350 T 1920,200"
-                  dur="22s"
+                  path="M 0,735 Q 350,715 700,745 T 1400,695 T 1920,710"
+                  dur="28s"
                   repeatCount="indefinite"
                 />
               </circle>

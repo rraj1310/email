@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic"
 
 import { getDashboardStats } from "@/app/actions/dashboard"
+import { getBirthdaySettings } from "@/app/actions/birthday"
+import { DashboardCards } from "@/components/dashboard/dashboard-cards"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Users, Mail, MousePointerClick, ShieldAlert, ArrowUpRight, TrendingUp, Sparkles, Activity, CalendarClock } from "lucide-react"
 import { EngagementChart } from "@/components/analytics/engagement-chart"
@@ -11,6 +13,7 @@ import { AiInsightsPanel, AiInsightsPanelSkeleton } from "@/components/dashboard
 
 export default async function DashboardPage() {
   const statsResult = await getDashboardStats()
+  const birthdayResult = await getBirthdaySettings()
   
   // Provide robust defaults if fetch fails
   const stats = statsResult.success && statsResult.data ? statsResult.data : {
@@ -25,6 +28,12 @@ export default async function DashboardPage() {
     activities: []
   }
 
+  const birthdaySettings = birthdayResult.success && birthdayResult.data ? birthdayResult.data : {
+    birthdayAutomationEnabled: false,
+    birthdayEmailTime: "09:00",
+    todayBirthdays: []
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-6 w-full max-w-full overflow-hidden">
       
@@ -37,27 +46,22 @@ export default async function DashboardPage() {
           <span className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Contacts:</span> 
             <span className="font-semibold">{stats.totalContacts}</span>
-            <span className="text-emerald-500 font-bold flex items-center gap-0.5">▲ +12.4%</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Emails Sent:</span> 
             <span className="font-semibold">{stats.totalSent}</span>
-            <span className="text-emerald-500 font-bold flex items-center gap-0.5">▲ +5.8%</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Open Rate:</span> 
             <span className="font-semibold">{stats.openRate}%</span>
-            <span className="text-emerald-500 font-bold flex items-center gap-0.5">▲ +4.2%</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Click Rate:</span> 
             <span className="font-semibold">{stats.clickRate}%</span>
-            <span className="text-rose-500 font-bold flex items-center gap-0.5">▼ -1.1%</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Suppressed:</span> 
             <span className="font-semibold">{stats.totalSuppressed}</span>
-            <span className="text-slate-400 font-bold flex items-center gap-0.5">▬ 0.0%</span>
           </span>
         </div>
       </div>
@@ -123,51 +127,11 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Avg Open Rate */}
-        <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-emerald-600" />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-              Avg Open Rate
-            </CardTitle>
-            <div className="p-1.5 bg-emerald-500/10 text-emerald-600 rounded-md">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="text-3xl font-bold tracking-tight">{stats.openRate}%</div>
-            {/* Custom visual progress bar */}
-            <div className="w-full bg-muted h-1.5 rounded-full mt-3 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-1000"
-                style={{ width: `${Math.min(stats.openRate, 100)}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Avg Click Rate */}
-        <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-amber-500 to-orange-500" />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-              Avg Click Rate
-            </CardTitle>
-            <div className="p-1.5 bg-amber-500/10 text-amber-500 rounded-md">
-              <MousePointerClick className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="text-3xl font-bold tracking-tight">{stats.clickRate}%</div>
-            {/* Custom visual progress bar */}
-            <div className="w-full bg-muted h-1.5 rounded-full mt-3 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-1000"
-                style={{ width: `${Math.min(stats.clickRate, 100)}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardCards 
+          initialEnabled={birthdaySettings.birthdayAutomationEnabled}
+          emailTime={birthdaySettings.birthdayEmailTime}
+          todayBirthdays={birthdaySettings.todayBirthdays}
+        />
       </div>
 
       {/* Quick Guide */}

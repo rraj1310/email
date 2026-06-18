@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Plus, Search, MoreHorizontal, FileEdit, Send, Copy, Pause, Play, Trash2, BarChart, Sparkles, Eye } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Campaign } from "@prisma/client"
 import { createCampaign, deleteCampaign, cloneCampaign, toggleCampaignStatus, sendTestCampaign } from "@/app/actions/campaigns"
 import { toast } from "sonner"
@@ -41,6 +42,20 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
   const [selectedCampaignId, setSelectedCampaignId] = React.useState<string | null>(null)
   const [testEmail, setTestEmail] = React.useState("")
   const [isSaving, setIsSaving] = React.useState(false)
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  React.useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateOpen(true)
+      // Clean up search params to avoid opening again on refresh
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("create")
+      const newQuery = params.toString()
+      router.replace(newQuery ? `/campaigns?${newQuery}` : "/campaigns", { scroll: false })
+    }
+  }, [searchParams, router])
 
   // Preview modal state
   const [previewCampaign, setPreviewCampaign] = React.useState<Campaign | null>(null)

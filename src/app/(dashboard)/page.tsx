@@ -73,7 +73,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/campaigns/new">
+          <Link href="/campaigns?create=true">
             <Button className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-medium shadow-md transition-all active:scale-95 duration-150 cursor-pointer">
               <Sparkles className="mr-2 h-4 w-4" />
               New Campaign

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { createMediaRecord } from "@/app/actions/media"
-import fs from "fs"
-import path from "path"
+import { uploadToCloudinary } from "@/lib/cloudinary"
 
 export async function POST(request: Request) {
   try {
@@ -15,16 +14,17 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer())
     const filename = file.name.replace(/\s+/g, "_")
     
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), "public", "uploads")
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
+    // Call Cloudinary signed upload utility
+    const uploadResult = await uploadToCloudinary(buffer, filename)
+    
+    if (!uploadResult.success || !uploadResult.url) {
+      return NextResponse.json(
+        { success: false, error: uploadResult.error || "Cloudinary upload failed" },
+        { status: 500 }
+      )
     }
 
-    const filePath = path.join(uploadDir, filename)
-    fs.writeFileSync(filePath, buffer)
-    
-    const fileUrl = `/uploads/${filename}`
+    const fileUrl = uploadResult.url
     const fileSize = file.size
 
     // Write to DB
@@ -39,3 +39,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: "Failed to upload file" }, { status: 500 })
   }
 }
+

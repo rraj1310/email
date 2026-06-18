@@ -48,6 +48,8 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
   const [isUpdatingBday, setIsUpdatingBday] = React.useState(false)
   const [isTriggeringNow, setIsTriggeringNow] = React.useState(false)
 
+  const birthdayWorkflows = workflows.filter((w) => w.triggerType === "BIRTHDAY")
+
   const handleToggleBday = async (checked: boolean) => {
     setIsUpdatingBday(true)
     try {
@@ -267,8 +269,8 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
         </CardHeader>
         
         <CardContent className="pt-6 grid gap-6 md:grid-cols-3">
-          {/* Section 1: Settings */}
-          <div className="space-y-4">
+          {/* Section 1: Settings & Active Flows */}
+          <div className="space-y-4 border-r border-amber-100/50 dark:border-amber-900/20 pr-4 last:border-0">
             <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400">Settings</h4>
             <div className="grid gap-2">
               <Label htmlFor="bdayTime" className="text-xs font-semibold text-foreground">
@@ -279,35 +281,76 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
                 <Input 
                   id="bdayTime" 
                   type="time" 
-                  className="pl-9 h-10 w-full sm:w-40 text-sm"
+                  className="pl-9 h-10 w-full text-sm"
                   value={bdayTime}
                   onChange={handleTimeChange}
                 />
               </div>
-              <span className="text-[10px] text-muted-foreground leading-normal block">
-                Occurs daily at your chosen hour in Indian Standard Time (IST).
-              </span>
             </div>
             
-            <div className="pt-2">
+            <div>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleTriggerNow} 
                 disabled={isTriggeringNow} 
-                className="h-9 w-full sm:w-auto text-xs bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:border-amber-900 dark:text-amber-400 font-semibold animate-pulse"
+                className="h-9 w-full text-xs bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:border-amber-900 dark:text-amber-400 font-semibold cursor-pointer"
               >
                 {isTriggeringNow ? (
                   <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Checking...</>
                 ) : (
-                  <><Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-600 animate-pulse" /> Check Today's Birthdays</>
+                  <><Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-600" /> Check Today's Birthdays</>
                 )}
               </Button>
-              <span className="text-[9px] text-muted-foreground mt-1.5 block">
-                Manually process checks for today immediately (safe: protects against duplicate sends).
-              </span>
+            </div>
+
+            <div className="pt-2 border-t border-amber-100/60 dark:border-amber-900/20 space-y-2">
+              <h5 className="font-bold text-[11px] uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                <Workflow className="h-3.5 w-3.5" /> Birthday Flows & Templates
+              </h5>
+              
+              {birthdayWorkflows.length > 0 ? (
+                <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
+                  {birthdayWorkflows.map((w) => {
+                    const ruleNodes = Array.isArray(w.nodes) ? w.nodes : []
+                    const emailActions = ruleNodes.filter((n: any) => n.type === "actionNode" && n.data?.actionType === "SEND_EMAIL")
+                    
+                    return (
+                      <div key={w.id} className="p-2.5 rounded-lg border border-amber-200/50 bg-white/50 dark:bg-slate-900/40 space-y-1.5 hover:shadow-xs transition-shadow">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="font-bold text-xs text-foreground truncate max-w-[140px]">{w.name}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                            w.isActive 
+                              ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" 
+                              : "bg-muted text-muted-foreground"
+                          }`}>
+                            {w.isActive ? "Active" : "Paused"}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground truncate">
+                            {emailActions.length} Email Node(s)
+                          </span>
+                          <Link 
+                            href={`/automations/${w.id}/editor`}
+                            className="font-bold text-[10px] text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:underline flex items-center gap-0.5"
+                          >
+                            Edit Flow →
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-[10px] text-muted-foreground p-3 rounded-lg bg-amber-500/5 border border-dashed border-amber-200/50 text-center">
+                  No birthday automation workflows found. Use "New Automation" to create one.
+                </div>
+              )}
             </div>
           </div>
+
           
           {/* Section 2: Today's Birthdays Preview */}
           <div className="md:col-span-2 space-y-3">

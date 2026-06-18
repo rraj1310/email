@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator"
 
 import { GlobalSearch } from "@/components/layout/global-search"
 import { ModeToggle } from "@/components/ui/mode-toggle"
+import { PremiumWorkspaceControls } from "@/components/layout/premium-workspace-controls"
 
 export default function DashboardLayout({
   children,
@@ -24,6 +25,7 @@ export default function DashboardLayout({
           </div>
           <div className="flex items-center gap-4">
             <GlobalSearch />
+            <PremiumWorkspaceControls />
             <ModeToggle />
           </div>
         </header>

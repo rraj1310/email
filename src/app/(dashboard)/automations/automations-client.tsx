@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Workflow, Settings, Play, Pause, Trash2, ArrowRight, Clock, Mail, CheckCircle, Loader2, Cake, Sparkles } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
-import { updateBirthdaySettings, triggerBirthdayCheckNow } from "@/app/actions/birthday"
+import { updateBirthdaySettings, triggerBirthdayCheckNow, saveSimpleBirthdayConfig } from "@/app/actions/birthday"
 import {
   Dialog,
   DialogContent,
@@ -30,9 +30,10 @@ interface AutomationsClientProps {
     birthdayEmailTime: string
     todayBirthdays: Array<{ id: string; name: string; email: string }>
   }
+  campaigns: any[]
 }
 
-export function AutomationsClient({ initialAutomations, birthdaySettings }: AutomationsClientProps) {
+export function AutomationsClient({ initialAutomations, birthdaySettings, campaigns }: AutomationsClientProps) {
   const [workflows, setWorkflows] = React.useState<any[]>(initialAutomations)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
@@ -48,37 +49,77 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
   const [isUpdatingBday, setIsUpdatingBday] = React.useState(false)
   const [isTriggeringNow, setIsTriggeringNow] = React.useState(false)
 
+  // Find active birthday workflow template ID
   const birthdayWorkflows = workflows.filter((w) => w.triggerType === "BIRTHDAY")
+  const activeBdayWorkflow = birthdayWorkflows[0]
+  
+  let initialCampaignId = ""
+  if (activeBdayWorkflow) {
+    const actions = Array.isArray(activeBdayWorkflow.actions) ? activeBdayWorkflow.actions : []
+    const action = actions.find((a: any) => a.actionType === "SEND_EMAIL")
+    if (action?.campaignId) {
+      initialCampaignId = action.campaignId
+    } else {
+      const nodes = Array.isArray(activeBdayWorkflow.nodes) ? activeBdayWorkflow.nodes : []
+      const node = nodes.find((n: any) => n.type === "actionNode" && n.data?.campaignId)
+      if (node?.data?.campaignId) {
+        initialCampaignId = node.data.campaignId
+      }
+    }
+  }
+  
+  if (!initialCampaignId && campaigns && campaigns.length > 0) {
+    initialCampaignId = campaigns[0].id
+  }
+
+  const [selectedBdayCampaignId, setSelectedBdayCampaignId] = React.useState(initialCampaignId)
+  const [isSavingConfig, setIsSavingConfig] = React.useState(false)
 
   const handleToggleBday = async (checked: boolean) => {
     setIsUpdatingBday(true)
     try {
-      const res = await updateBirthdaySettings(checked, bdayTime)
+      setBdayEnabled(checked)
+      const res = await saveSimpleBirthdayConfig(selectedBdayCampaignId || "", checked, bdayTime)
       if (res.success) {
-        setBdayEnabled(checked)
-        toast.success(`Birthday emails ${checked ? "enabled" : "disabled"}.`)
+        toast.success(`Birthday emails ${checked ? "activated" : "paused"}.`)
+        if (res.data) {
+          const updated = res.data
+          setWorkflows(prev => prev.some(w => w.id === updated.id) ? prev.map(w => w.id === updated.id ? updated : w) : [updated, ...prev])
+        }
       } else {
-        toast.error(res.error || "Failed to update settings.")
+        toast.error(res.error || "Failed to update state.")
       }
     } catch (err) {
-      toast.error("Failed to update settings.")
+      toast.error("Failed to update status settings.")
     } finally {
       setIsUpdatingBday(false)
     }
   }
 
-  const handleTimeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = e.target.value
-    setBdayTime(time)
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBdayTime(e.target.value)
+  }
+
+  const handleSaveSimpleConfig = async () => {
+    if (!selectedBdayCampaignId) {
+      toast.error("Please select an email template first.")
+      return
+    }
+    setIsSavingConfig(true)
     try {
-      const res = await updateBirthdaySettings(bdayEnabled, time)
-      if (res.success) {
-        toast.success(`Send time updated to ${time}.`)
+      const res = await saveSimpleBirthdayConfig(selectedBdayCampaignId, bdayEnabled, bdayTime)
+      if (res.success && res.data) {
+        toast.success("Birthday settings & flow updated successfully!")
+        const updatedRule = res.data
+        setWorkflows(prev => prev.some(w => w.id === updatedRule.id) ? prev.map(w => w.id === updatedRule.id ? updatedRule : w) : [updatedRule, ...prev])
       } else {
-        toast.error(res.error || "Failed to update send time.")
+        toast.error(res.error || "Failed to save settings.")
       }
     } catch (err) {
-      toast.error("Failed to update settings.")
+      console.error(err)
+      toast.error("An error occurred while saving configuration.")
+    } finally {
+      setIsSavingConfig(false)
     }
   }
 
@@ -269,9 +310,60 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
         </CardHeader>
         
         <CardContent className="pt-6 grid gap-6 md:grid-cols-3">
-          {/* Section 1: Settings & Active Flows */}
-          <div className="space-y-4 border-r border-amber-100/50 dark:border-amber-900/20 pr-4 last:border-0">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400">Settings</h4>
+          {/* Section 1: Settings Form (Simplified UI for Non-Technical Client) */}
+          <div className="space-y-4 border-r border-amber-100/50 dark:border-amber-900/20 pr-4 last:border-0 md:col-span-1">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+              <Settings className="h-4 w-4" /> Setup Birthday Email
+            </h4>
+
+            {/* Email Template Dropdown */}
+            <div className="grid gap-2">
+              <Label htmlFor="bdayCampaignSelect" className="text-xs font-semibold text-foreground">
+                Email Template to Send
+              </Label>
+              {campaigns && campaigns.length > 0 ? (
+                <select
+                  id="bdayCampaignSelect"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  value={selectedBdayCampaignId}
+                  onChange={(e) => setSelectedBdayCampaignId(e.target.value)}
+                >
+                  {campaigns.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.subject ? `(${c.subject})` : ""}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="text-[11px] text-muted-foreground p-3 rounded-md bg-amber-500/5 border border-amber-200/40">
+                  No templates found.{" "}
+                  <Link href="/campaigns/new" className="text-amber-600 hover:underline font-bold">
+                    Create a campaign template first
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Edit template copy button */}
+            {selectedBdayCampaignId && (
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/campaigns/${selectedBdayCampaignId}/editor`, "_blank")}
+                  className="h-9 w-full text-xs bg-white hover:bg-amber-50 border-amber-200 text-amber-800 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-amber-400 font-semibold cursor-pointer"
+                >
+                  <Mail className="mr-1.5 h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  Write / Edit Email Message Content 📝
+                </Button>
+                <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                  Opens the visual email editor to write the birthday copy.
+                </p>
+              </div>
+            )}
+
+            {/* Time Picker */}
             <div className="grid gap-2">
               <Label htmlFor="bdayTime" className="text-xs font-semibold text-foreground">
                 Daily Send Time (IST)
@@ -287,67 +379,42 @@ export function AutomationsClient({ initialAutomations, birthdaySettings }: Auto
                 />
               </div>
             </div>
-            
-            <div>
+
+            {/* Save Config Button */}
+            <div className="pt-1.5">
+              <Button
+                type="button"
+                onClick={handleSaveSimpleConfig}
+                disabled={isSavingConfig || !selectedBdayCampaignId}
+                className="h-10 w-full text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-bold shadow-md cursor-pointer"
+              >
+                {isSavingConfig ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saving Settings...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Save Birthday Settings
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Separator / Trigger check now */}
+            <div className="pt-2 border-t border-amber-100/60 dark:border-amber-900/20">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleTriggerNow} 
                 disabled={isTriggeringNow} 
-                className="h-9 w-full text-xs bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:border-amber-900 dark:text-amber-400 font-semibold cursor-pointer"
+                className="h-9 w-full text-[11px] bg-amber-50/50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:border-amber-900 dark:text-amber-400 font-semibold cursor-pointer"
               >
                 {isTriggeringNow ? (
-                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Checking...</>
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Checking Today's Birthdays...</>
                 ) : (
-                  <><Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-600" /> Check Today's Birthdays</>
+                  <><Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-600" /> Test Run: Check & Send Today</>
                 )}
               </Button>
-            </div>
-
-            <div className="pt-2 border-t border-amber-100/60 dark:border-amber-900/20 space-y-2">
-              <h5 className="font-bold text-[11px] uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
-                <Workflow className="h-3.5 w-3.5" /> Birthday Flows & Templates
-              </h5>
-              
-              {birthdayWorkflows.length > 0 ? (
-                <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
-                  {birthdayWorkflows.map((w) => {
-                    const ruleNodes = Array.isArray(w.nodes) ? w.nodes : []
-                    const emailActions = ruleNodes.filter((n: any) => n.type === "actionNode" && n.data?.actionType === "SEND_EMAIL")
-                    
-                    return (
-                      <div key={w.id} className="p-2.5 rounded-lg border border-amber-200/50 bg-white/50 dark:bg-slate-900/40 space-y-1.5 hover:shadow-xs transition-shadow">
-                        <div className="flex items-center justify-between gap-1.5">
-                          <span className="font-bold text-xs text-foreground truncate max-w-[140px]">{w.name}</span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
-                            w.isActive 
-                              ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" 
-                              : "bg-muted text-muted-foreground"
-                          }`}>
-                            {w.isActive ? "Active" : "Paused"}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="text-muted-foreground truncate">
-                            {emailActions.length} Email Node(s)
-                          </span>
-                          <Link 
-                            href={`/automations/${w.id}/editor`}
-                            className="font-bold text-[10px] text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:underline flex items-center gap-0.5"
-                          >
-                            Edit Flow →
-                          </Link>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="text-[10px] text-muted-foreground p-3 rounded-lg bg-amber-500/5 border border-dashed border-amber-200/50 text-center">
-                  No birthday automation workflows found. Use "New Automation" to create one.
-                </div>
-              )}
             </div>
           </div>
 

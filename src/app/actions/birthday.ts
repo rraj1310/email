@@ -236,3 +236,101 @@ export async function triggerBirthdayCheckNow() {
     return { success: false, error: error.message || "Failed manual trigger execution" }
   }
 }
+
+// Action: Save simple birthday automation configuration
+export async function saveSimpleBirthdayConfig(campaignId: string, enabled: boolean, time: string) {
+  try {
+    const { organizationId } = await enforceWorkspaceEditor()
+
+    // 1. Update organization settings
+    await prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        birthdayAutomationEnabled: enabled,
+        birthdayEmailTime: time
+      }
+    })
+
+    // 2. Find or create the birthday automation rule
+    let rule = await prisma.automationRule.findFirst({
+      where: {
+        organizationId,
+        triggerType: "BIRTHDAY"
+      }
+    })
+
+    const initialNodes = [
+      {
+        id: "trigger-node",
+        type: "triggerNode",
+        position: { x: 250, y: 100 },
+        data: { label: "When: Contact's Birthday", type: "BIRTHDAY", config: {} }
+      },
+      {
+        id: "action-node-1",
+        type: "actionNode",
+        position: { x: 250, y: 280 },
+        data: { actionType: "SEND_EMAIL", label: "Send Email Campaign", campaignId }
+      }
+    ]
+
+    const initialEdges = [
+      {
+        id: "e-trigger-action",
+        source: "trigger-node",
+        target: "action-node-1"
+      }
+    ]
+
+    const actionsJson = [
+      {
+        nodeId: "action-node-1",
+        actionType: "SEND_EMAIL",
+        campaignId,
+        waitDays: 0,
+        tagName: ""
+      }
+    ]
+
+    if (rule) {
+      // Update existing
+      rule = await prisma.automationRule.update({
+        where: { id: rule.id },
+        data: {
+          isActive: enabled,
+          nodes: initialNodes,
+          edges: initialEdges,
+          actions: actionsJson
+        }
+      })
+    } else {
+      // Create new
+      rule = await prisma.automationRule.create({
+        data: {
+          name: "Automatic Birthday Greeting",
+          triggerType: "BIRTHDAY",
+          triggerConfig: { status: "ACTIVE", description: "Triggered on contact's birthday" },
+          actions: actionsJson,
+          nodes: initialNodes,
+          edges: initialEdges,
+          isActive: enabled,
+          organizationId
+        }
+      })
+    }
+
+    await logActivity(
+      `Configured simple birthday automation: ${enabled ? 'ENABLED' : 'DISABLED'} at ${time} with template ID ${campaignId}`,
+      "SETTINGS",
+      undefined,
+      undefined,
+      organizationId
+    )
+
+    return { success: true, data: rule }
+  } catch (error: any) {
+    console.error("Failed to save simple birthday config:", error)
+    return { success: false, error: error.message || "Failed to save configuration" }
+  }
+}
+

@@ -177,12 +177,18 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
           </p>
         </div>
         
-        {/* Create Campaign Dialog Trigger */}
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger render={<Button className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium" />}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Create Campaign
-          </DialogTrigger>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.location.href = "/campaigns/personalized"} className="h-9 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/20 font-medium">
+            <Sparkles className="mr-1.5 h-3.5 w-3.5 text-indigo-500" />
+            AI Personalized Send
+          </Button>
+
+          {/* Create Campaign Dialog Trigger */}
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger render={<Button className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium" />}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Create Campaign
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <form onSubmit={handleCreate}>
               <DialogHeader className="pb-3 border-b mb-4">
@@ -235,6 +241,7 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Search Bar */}

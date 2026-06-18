@@ -67,6 +67,7 @@ function CustomTriggerNode({ id, data, selected }: any) {
             else if (val === "CAMPAIGN_OPENED") label = "Campaign Opened"
             else if (val === "LINK_CLICKED") label = "Link Clicked"
             else if (val === "FORM_SUBMITTED") label = "Form Submitted"
+            else if (val === "BIRTHDAY") label = "Contact's Birthday"
             updateNodeData(id, { type: val, label: `When: ${label}` })
           }}
           className="w-full text-xs bg-muted/50 border border-muted/80 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500 text-foreground"
@@ -76,6 +77,7 @@ function CustomTriggerNode({ id, data, selected }: any) {
           <option value="CAMPAIGN_OPENED">Campaign Opened</option>
           <option value="LINK_CLICKED">Link Clicked</option>
           <option value="FORM_SUBMITTED">Form Submitted</option>
+          <option value="BIRTHDAY">🎂 Contact's Birthday</option>
         </select>
       </div>
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-amber-500 border-2 border-white dark:border-slate-900" />

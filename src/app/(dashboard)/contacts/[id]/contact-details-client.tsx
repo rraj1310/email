@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Mail, Phone, MapPin, Clock, MousePointerClick, User, Save, Trash2, Edit, Sparkles, Tag as TagIcon, Check } from "lucide-react"
+import { ArrowLeft, Mail, Phone, MapPin, Clock, MousePointerClick, User, Save, Trash2, Edit, Sparkles, Tag as TagIcon, Check, Cake } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -53,6 +53,7 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
   const [editCountry, setEditCountry] = React.useState(contact.country || "")
   const [editStatus, setEditStatus] = React.useState(contact.status)
   const [editTagsString, setEditTagsString] = React.useState(contact.tags.map(t => t.name).join(", "))
+  const [editBirthday, setEditBirthday] = React.useState(contact.birthday ? new Date(contact.birthday).toISOString().split("T")[0] : "")
 
   // Parsed custom fields
   const customFieldsObj = React.useMemo(() => {
@@ -81,13 +82,22 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
         phone: editPhone,
         city: editCity,
         country: editCountry,
+        birthday: editBirthday || null,
         status: editStatus,
         tags: parsedTags
       })
 
       if (result.success && result.data) {
         toast.success("Contact details updated successfully.")
-        setContact(result.data as ContactWithTags)
+        const resData = result.data as ContactWithTags
+        setContact(resData)
+        setEditFirstName(resData.firstName || "")
+        setEditLastName(resData.lastName || "")
+        setEditPhone(resData.phone || "")
+        setEditCity(resData.city || "")
+        setEditCountry(resData.country || "")
+        setEditBirthday(resData.birthday ? new Date(resData.birthday).toISOString().split("T")[0] : "")
+        setEditStatus(resData.status)
         setIsEditOpen(false)
       } else {
         toast.error(result.error || "Failed to update contact details.")
@@ -202,6 +212,15 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
                       </select>
                     </div>
                     <div className="grid gap-1.5">
+                      <Label htmlFor="editBirthday" className="text-xs font-semibold">Birthday</Label>
+                      <Input 
+                        id="editBirthday" 
+                        type="date"
+                        value={editBirthday} 
+                        onChange={(e) => setEditBirthday(e.target.value)} 
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
                       <Label htmlFor="editTags" className="text-xs font-semibold">Tags (Comma-separated)</Label>
                       <Input 
                         id="editTags" 
@@ -294,6 +313,12 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
                   <MapPin className="h-4 w-4 shrink-0" />
                   <span>{contact.city ? `${contact.city}, ${contact.country || ''}` : "No geographic data"}</span>
                 </div>
+                {contact.birthday && (
+                  <div className="flex items-center text-xs text-muted-foreground gap-2">
+                    <Cake className="h-4 w-4 shrink-0 text-amber-500" />
+                    <span>Birthday: {new Date(contact.birthday).toLocaleDateString()}</span>
+                  </div>
+                )}
               </div>
 
               <Separator />

@@ -74,6 +74,7 @@ export async function createContact(data: {
   phone?: string
   city?: string
   country?: string
+  birthday?: string | null
   status?: string
   tags?: string[] // tag names
 }) {
@@ -118,6 +119,7 @@ export async function createContact(data: {
         phone: data.phone || null,
         city: data.city || null,
         country: data.country || null,
+        birthday: data.birthday ? new Date(data.birthday) : null,
         status: (data.status as any) || "ACTIVE",
         organizationId,
         tags: tagConnections,
@@ -169,6 +171,7 @@ export async function updateContact(id: string, data: {
   phone?: string
   city?: string
   country?: string
+  birthday?: string | null
   status?: string
   tags?: string[] // list of tag names
   customFields?: string // stringified json
@@ -220,6 +223,7 @@ export async function updateContact(id: string, data: {
         phone: data.phone !== undefined ? data.phone : currentContact.phone,
         city: data.city !== undefined ? data.city : currentContact.city,
         country: data.country !== undefined ? data.country : currentContact.country,
+        birthday: data.birthday !== undefined ? (data.birthday ? new Date(data.birthday) : null) : currentContact.birthday,
         status: data.status !== undefined ? (data.status as any) : currentContact.status,
         customFields: data.customFields !== undefined ? JSON.parse(data.customFields || "{}") : currentContact.customFields as any,
         tags: tagConnections

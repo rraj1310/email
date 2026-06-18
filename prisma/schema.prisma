@@ -97,6 +97,9 @@ model Organization {
   aiApiKey             String?
   aiModelOverride      String?
 
+  birthdayAutomationEnabled Boolean  @default(false)
+  birthdayEmailTime         String   @default("09:00")
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

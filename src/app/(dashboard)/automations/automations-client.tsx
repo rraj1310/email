@@ -4,7 +4,9 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Workflow, Settings, Play, Pause, Trash2, ArrowRight, Clock, Mail, CheckCircle, Loader2 } from "lucide-react"
+import { Plus, Workflow, Settings, Play, Pause, Trash2, ArrowRight, Clock, Mail, CheckCircle, Loader2, Cake, Sparkles } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { updateBirthdaySettings, triggerBirthdayCheckNow } from "@/app/actions/birthday"
 import {
   Dialog,
   DialogContent,
@@ -23,9 +25,14 @@ import Link from "next/link"
 
 interface AutomationsClientProps {
   initialAutomations: any[]
+  birthdaySettings: {
+    birthdayAutomationEnabled: boolean
+    birthdayEmailTime: string
+    todayBirthdays: Array<{ id: string; name: string; email: string }>
+  }
 }
 
-export function AutomationsClient({ initialAutomations }: AutomationsClientProps) {
+export function AutomationsClient({ initialAutomations, birthdaySettings }: AutomationsClientProps) {
   const [workflows, setWorkflows] = React.useState<any[]>(initialAutomations)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
@@ -33,6 +40,61 @@ export function AutomationsClient({ initialAutomations }: AutomationsClientProps
   // Form states
   const [newWorkflowName, setNewWorkflowName] = React.useState("")
   const [newTriggerType, setNewTriggerType] = React.useState("NEW_CONTACT")
+
+  // Birthday states
+  const [bdayEnabled, setBdayEnabled] = React.useState(birthdaySettings.birthdayAutomationEnabled)
+  const [bdayTime, setBdayTime] = React.useState(birthdaySettings.birthdayEmailTime)
+  const [todayBirthdays, setTodayBirthdays] = React.useState(birthdaySettings.todayBirthdays)
+  const [isUpdatingBday, setIsUpdatingBday] = React.useState(false)
+  const [isTriggeringNow, setIsTriggeringNow] = React.useState(false)
+
+  const handleToggleBday = async (checked: boolean) => {
+    setIsUpdatingBday(true)
+    try {
+      const res = await updateBirthdaySettings(checked, bdayTime)
+      if (res.success) {
+        setBdayEnabled(checked)
+        toast.success(`Birthday emails ${checked ? "enabled" : "disabled"}.`)
+      } else {
+        toast.error(res.error || "Failed to update settings.")
+      }
+    } catch (err) {
+      toast.error("Failed to update settings.")
+    } finally {
+      setIsUpdatingBday(false)
+    }
+  }
+
+  const handleTimeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = e.target.value
+    setBdayTime(time)
+    try {
+      const res = await updateBirthdaySettings(bdayEnabled, time)
+      if (res.success) {
+        toast.success(`Send time updated to ${time}.`)
+      } else {
+        toast.error(res.error || "Failed to update send time.")
+      }
+    } catch (err) {
+      toast.error("Failed to update settings.")
+    }
+  }
+
+  const handleTriggerNow = async () => {
+    setIsTriggeringNow(true)
+    try {
+      const res = await triggerBirthdayCheckNow()
+      if (res.success) {
+        toast.success(`${res.count} birthday email(s) dispatched successfully!`)
+      } else {
+        toast.error(res.error || "Failed to trigger birthday check.")
+      }
+    } catch (err) {
+      toast.error("Failed to execute check.")
+    } finally {
+      setIsTriggeringNow(false)
+    }
+  }
 
   // Create Submit
   const handleCreate = async (e: React.FormEvent) => {
@@ -148,6 +210,7 @@ export function AutomationsClient({ initialAutomations }: AutomationsClientProps
                     <option value="CAMPAIGN_OPENED">Campaign Opened by Contact</option>
                     <option value="LINK_CLICKED">Link Clicked inside Email</option>
                     <option value="FORM_SUBMITTED">Form Submitted</option>
+                    <option value="BIRTHDAY">🎂 Contact's Birthday</option>
                   </select>
                 </div>
               </div>
@@ -164,6 +227,124 @@ export function AutomationsClient({ initialAutomations }: AutomationsClientProps
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Birthday Automation Settings Card */}
+      <Card className="border shadow-md bg-gradient-to-tr from-amber-500/5 to-pink-500/5 dark:from-amber-950/10 dark:to-pink-950/10 border-amber-200 dark:border-amber-900/40">
+        <CardHeader className="pb-4 border-b border-amber-100 dark:border-amber-900/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-pink-500 text-white rounded-xl shadow-md">
+                <Cake className="h-6 w-6 animate-bounce" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-extrabold text-foreground flex items-center gap-2">
+                  Birthday Automation
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  Automatically send personalized greetings and milestone emails to clients on their special day.
+                </CardDescription>
+              </div>
+            </div>
+            
+            {/* Status Switch */}
+            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border px-4 py-2.5 rounded-xl shadow-xs shrink-0 self-start sm:self-auto">
+              <div className="text-right">
+                <span className="text-xs font-bold text-foreground block">
+                  {bdayEnabled ? "Automation Active" : "Automation Paused"}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {bdayEnabled ? "Daily checks enabled" : "Toggle to activate"}
+                </span>
+              </div>
+              <Switch 
+                checked={bdayEnabled} 
+                onCheckedChange={handleToggleBday} 
+                disabled={isUpdatingBday} 
+                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-500 data-[state=checked]:to-pink-500"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="pt-6 grid gap-6 md:grid-cols-3">
+          {/* Section 1: Settings */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400">Settings</h4>
+            <div className="grid gap-2">
+              <Label htmlFor="bdayTime" className="text-xs font-semibold text-foreground">
+                Daily Send Time (IST)
+              </Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="bdayTime" 
+                  type="time" 
+                  className="pl-9 h-10 w-full sm:w-40 text-sm"
+                  value={bdayTime}
+                  onChange={handleTimeChange}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground leading-normal block">
+                Occurs daily at your chosen hour in Indian Standard Time (IST).
+              </span>
+            </div>
+            
+            <div className="pt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleTriggerNow} 
+                disabled={isTriggeringNow} 
+                className="h-9 w-full sm:w-auto text-xs bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:border-amber-900 dark:text-amber-400 font-semibold animate-pulse"
+              >
+                {isTriggeringNow ? (
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Checking...</>
+                ) : (
+                  <><Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-600 animate-pulse" /> Check Today's Birthdays</>
+                )}
+              </Button>
+              <span className="text-[9px] text-muted-foreground mt-1.5 block">
+                Manually process checks for today immediately (safe: protects against duplicate sends).
+              </span>
+            </div>
+          </div>
+          
+          {/* Section 2: Today's Birthdays Preview */}
+          <div className="md:col-span-2 space-y-3">
+            <div className="flex items-center justify-between pb-1">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-pink-700 dark:text-pink-400 flex items-center gap-1.5">
+                Today's Birthdays
+                <Badge variant="secondary" className="px-2 py-0 text-[10px] bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400 font-bold">
+                  {todayBirthdays.length}
+                </Badge>
+              </h4>
+              <span className="text-[10px] text-muted-foreground">Month/Day matches IST today</span>
+            </div>
+            
+            <div className="border rounded-xl bg-white/70 dark:bg-slate-900/60 p-3 max-h-[160px] overflow-y-auto">
+              {todayBirthdays.length > 0 ? (
+                <div className="divide-y divide-amber-100/50 dark:divide-slate-800">
+                  {todayBirthdays.map((c) => (
+                    <div key={c.id} className="py-2 flex items-center justify-between text-xs hover:bg-amber-500/5 dark:hover:bg-pink-500/5 px-2 rounded-md transition-colors">
+                      <div className="font-semibold text-foreground flex items-center gap-1.5">
+                        <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-amber-400 to-pink-400 flex items-center justify-center text-[9px] text-white font-bold">
+                          {c.name[0].toUpperCase()}
+                        </div>
+                        {c.name}
+                      </div>
+                      <span className="text-muted-foreground font-mono">{c.email}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground text-xs leading-normal">
+                  🎈 No birthdays scheduled for today.
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Grid listing */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">

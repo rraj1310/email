@@ -72,6 +72,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
   const [newCountry, setNewCountry] = React.useState("")
   const [newStatus, setNewStatus] = React.useState("ACTIVE")
   const [newTagsString, setNewTagsString] = React.useState("")
+  const [newBirthday, setNewBirthday] = React.useState("")
 
   // Filter contacts by query + advanced segments
   const filteredContacts = React.useMemo(() => {
@@ -155,6 +156,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         phone: newPhone,
         city: newCity,
         country: newCountry,
+        birthday: newBirthday || null,
         status: newStatus,
         tags: parsedTags
       })
@@ -172,6 +174,7 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
         setNewCountry("")
         setNewStatus("ACTIVE")
         setNewTagsString("")
+        setNewBirthday("")
         setIsAddOpen(false)
       } else {
         toast.error(result.error || "Failed to create contact")
@@ -336,6 +339,15 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
                         onChange={(e) => setNewCountry(e.target.value)} 
                       />
                     </div>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="birthday" className="text-xs font-semibold">Birthday</Label>
+                    <Input 
+                      id="birthday" 
+                      type="date"
+                      value={newBirthday} 
+                      onChange={(e) => setNewBirthday(e.target.value)} 
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="grid gap-1.5">

@@ -11,6 +11,8 @@ import {
   onCampaignClicked,
   onTagAdded,
   onFormSubmitted,
+  birthdayDailyCheck,
+  personalizedDispatch,
 } from "@/inngest/functions"
 
 export const { GET, POST, PUT } = serve({
@@ -26,5 +28,7 @@ export const { GET, POST, PUT } = serve({
     onCampaignClicked,
     onTagAdded,
     onFormSubmitted,
+    birthdayDailyCheck,
+    personalizedDispatch,
   ],
 })

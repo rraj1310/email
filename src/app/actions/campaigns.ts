@@ -264,6 +264,7 @@ export async function dispatchCampaignAction({
 
     let sentCount = 0
     let bounceCount = 0
+    let lastError = ""
 
     // Send emails
     for (const target of targets) {
@@ -297,9 +298,19 @@ export async function dispatchCampaignAction({
         } else {
           bounceCount++
         }
-      } catch (err) {
-        console.error(`Failed to send email to ${target.email}:`, err)
+      } catch (err: any) {
+        const errMsg = err.message || "Unknown error"
+        console.error(`Failed to send email to ${target.email}:`, errMsg)
+        lastError = errMsg
         bounceCount++
+
+        // If the very first email fails with a config/auth error, abort immediately
+        // so the user gets a clear error instead of "sent to 0 recipients"
+        if (sentCount === 0 && bounceCount === 1) {
+          if (errMsg.includes("SMTP credentials") || errMsg.includes("SMTP delivery failed") || errMsg.includes("Invalid login") || errMsg.includes("authentication")) {
+            return { success: false, error: `Email delivery failed: ${errMsg}` }
+          }
+        }
       }
     }
 

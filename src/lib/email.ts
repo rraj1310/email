@@ -19,6 +19,8 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
       throw new Error("SendGrid API key not configured")
     }
 
+    console.log(`[SendGrid] Sending to: ${to} | Subject: ${subject} | From: ${defaultFrom}`)
+
     const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: {
@@ -35,9 +37,11 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
 
     if (!response.ok) {
       const errText = await response.text()
+      console.error(`[SendGrid] FAILED: ${response.status} — ${errText}`)
       throw new Error(`SendGrid API error: ${errText}`)
     }
 
+    console.log(`[SendGrid] ✅ Sent successfully to ${to}`)
     return { success: true, provider: "SENDGRID", messageId: response.headers.get("x-message-id") || "sg-id" }
   }
 
@@ -47,11 +51,12 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
   const smtpUser = process.env.SMTP_USER
   const smtpPass = process.env.SMTP_PASS
 
-  // Fallback: If not configured, simulate delivery
   if (!smtpHost || !smtpUser || !smtpPass) {
-    console.log(`[Email Dispatch Simulation] From: ${defaultFrom} | To: ${to} | Subject: ${subject}`)
-    return { success: true, provider: "SIMULATOR", messageId: `sim-${Date.now()}` }
+    console.error(`[Email] ❌ SMTP not configured! SMTP_HOST=${smtpHost ? "SET" : "MISSING"}, SMTP_USER=${smtpUser ? "SET" : "MISSING"}, SMTP_PASS=${smtpPass ? "SET" : "MISSING"}`)
+    throw new Error("Email delivery failed: SMTP credentials are not configured. Please set SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.")
   }
+
+  console.log(`[SMTP] Sending to: ${to} | Subject: ${subject} | From: ${defaultFrom} | Host: ${smtpHost}:${smtpPort}`)
 
   const transporter = nodemailer.createTransport({
     host: smtpHost,
@@ -63,12 +68,18 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
     },
   })
 
-  const info = await transporter.sendMail({
-    from: defaultFrom,
-    to,
-    subject,
-    html,
-  })
+  try {
+    const info = await transporter.sendMail({
+      from: defaultFrom,
+      to,
+      subject,
+      html,
+    })
 
-  return { success: true, provider: "SMTP", messageId: info.messageId }
+    console.log(`[SMTP] ✅ Sent successfully to ${to} | MessageID: ${info.messageId}`)
+    return { success: true, provider: "SMTP", messageId: info.messageId }
+  } catch (smtpError: any) {
+    console.error(`[SMTP] ❌ Failed to send to ${to}:`, smtpError.message || smtpError)
+    throw new Error(`SMTP delivery failed: ${smtpError.message || "Unknown SMTP error"}`)
+  }
 }

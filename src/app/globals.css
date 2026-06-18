@@ -54,7 +54,7 @@
   --background: oklch(0.965 0.02 285);
   --foreground: oklch(0.18 0.05 285);
   
-  --card: oklch(1 0 0);
+  --card: oklch(1 0 0 / 0.65);
   --card-foreground: oklch(0.18 0.05 285);
   
   --popover: oklch(1 0 0);
@@ -102,7 +102,7 @@
   --background: oklch(0.12 0.03 285);
   --foreground: oklch(0.98 0.01 285);
   
-  --card: oklch(0.15 0.04 285);
+  --card: oklch(0.15 0.04 285 / 0.65);
   --card-foreground: oklch(0.98 0.01 285);
   
   --popover: oklch(0.15 0.04 285);
@@ -221,27 +221,27 @@ main, .flex-1 {
 }
 
 /* Premium Glassmorphism Overrides */
-.rounded-xl.border.bg-card {
-  background: rgba(255, 255, 255, 0.88) !important;
+div[data-slot="card"] {
+  background: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(139, 92, 246, 0.12) !important;
   box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
-.dark .rounded-xl.border.bg-card {
-  background: rgba(18, 14, 30, 0.85) !important;
+.dark div[data-slot="card"] {
+  background: rgba(18, 14, 30, 0.65) !important;
   backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(167, 139, 250, 0.12) !important;
   box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.rounded-xl.border.bg-card:hover {
+div[data-slot="card"]:hover {
   transform: translateY(-4px) scale(1.005) !important;
   border-color: var(--primary) !important;
   box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
 }
-.dark .rounded-xl.border.bg-card:hover {
+.dark div[data-slot="card"]:hover {
   transform: translateY(-4px) scale(1.005) !important;
   border-color: var(--primary) !important;
   box-shadow: 0 20px 40px -15px rgba(167, 139, 250, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;

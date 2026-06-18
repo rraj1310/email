@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { UserRole } from "@prisma/client"
 
+import { db } from "@/lib/db"
+
 export interface WorkspaceContext {
   userId: string
   organizationId: string
@@ -20,6 +22,15 @@ export async function getActiveWorkspaceContext(): Promise<WorkspaceContext> {
   
   const user = session.user as any
   if (!user.organizationId) {
+    throw new Error("WORKSPACE_NOT_FOUND")
+  }
+
+  // Verify that the organization actually exists in the database to prevent foreign key errors on stale sessions
+  const orgExists = await db.organization.findUnique({
+    where: { id: user.organizationId },
+    select: { id: true }
+  })
+  if (!orgExists) {
     throw new Error("WORKSPACE_NOT_FOUND")
   }
 

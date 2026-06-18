@@ -127,7 +127,7 @@ export function ImportWizard() {
       const result = await importContactsAction(mappedContacts)
       setIsImporting(false)
       
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success(`Import complete! Created: ${result.data.imported}, Updated: ${result.data.updated}, Skipped: ${result.data.invalid}`)
         setStep("DONE")
       } else {

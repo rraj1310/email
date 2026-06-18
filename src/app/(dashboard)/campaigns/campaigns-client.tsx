@@ -26,21 +26,26 @@ import {
 import { Plus, Search, MoreHorizontal, FileEdit, Send, Copy, Pause, Play, Trash2, BarChart, Sparkles, Eye } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Campaign } from "@prisma/client"
-import { createCampaign, deleteCampaign, cloneCampaign, toggleCampaignStatus, sendTestCampaign } from "@/app/actions/campaigns"
+import { Campaign, Contact } from "@prisma/client"
+import { createCampaign, deleteCampaign, cloneCampaign, toggleCampaignStatus, sendTestCampaign, dispatchCampaignAction } from "@/app/actions/campaigns"
 import { toast } from "sonner"
 
 interface CampaignsClientProps {
   initialCampaigns: Campaign[]
+  initialContacts?: Contact[]
 }
 
-export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
+export function CampaignsClient({ initialCampaigns, initialContacts = [] }: CampaignsClientProps) {
   const [campaigns, setCampaigns] = React.useState<Campaign[]>(initialCampaigns)
+  const [contacts] = React.useState<Contact[]>(() => initialContacts.filter(c => c.status === "ACTIVE"))
   const [search, setSearch] = React.useState("")
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
   const [isSendTestOpen, setIsSendTestOpen] = React.useState(false)
   const [selectedCampaignId, setSelectedCampaignId] = React.useState<string | null>(null)
+  const [sendMode, setSendMode] = React.useState<"TEST" | "ALL" | "SELECTED">("TEST")
   const [testEmail, setTestEmail] = React.useState("")
+  const [selectedContactIds, setSelectedContactIds] = React.useState<string[]>([])
+  const [contactSearch, setContactSearch] = React.useState("")
   const [isSaving, setIsSaving] = React.useState(false)
 
   const searchParams = useSearchParams()
@@ -73,6 +78,15 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
     )
   }, [campaigns, search])
 
+  // Filter contacts for the select list
+  const filteredContacts = React.useMemo(() => {
+    return contacts.filter(c => 
+      c.email.toLowerCase().includes(contactSearch.toLowerCase()) ||
+      `${c.firstName || ""} ${c.lastName || ""}`.toLowerCase().includes(contactSearch.toLowerCase())
+    )
+  }, [contacts, contactSearch])
+
+
   // Create Campaign Submit
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,7 +98,7 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
     setIsSaving(true)
     try {
       const result = await createCampaign(newCampaignName, newSubject, newPreviewText)
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success("Campaign created! Redirecting to email editor...")
         setCampaigns([result.data, ...campaigns])
         setIsCreateOpen(false)
@@ -111,7 +125,7 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
   const handleToggleStatus = async (id: string) => {
     try {
       const result = await toggleCampaignStatus(id)
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success(`Campaign state updated to ${result.data.status}`)
         setCampaigns(campaigns.map(c => c.id === id ? result.data as Campaign : c))
       } else {
@@ -127,7 +141,7 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
   const handleClone = async (id: string) => {
     try {
       const result = await cloneCampaign(id)
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success("Campaign cloned successfully!")
         setCampaigns([result.data, ...campaigns])
       } else {
@@ -145,7 +159,7 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
 
     try {
       const result = await deleteCampaign(id)
-      if (result.success) {
+      if (!("error" in result)) {
         toast.success("Campaign deleted.")
         setCampaigns(campaigns.filter(c => c.id !== id))
       } else {
@@ -157,28 +171,46 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
     }
   }
 
-  // Trigger Send Campaign Simulation
+  // Trigger Send Campaign Dispatch
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedCampaignId || !testEmail) return
+    if (!selectedCampaignId) return
+    if (sendMode === "TEST" && !testEmail) {
+      toast.error("Please provide a recipient email address.")
+      return
+    }
+    if (sendMode === "SELECTED" && selectedContactIds.length === 0) {
+      toast.error("Please select at least one contact.")
+      return
+    }
 
     setIsSaving(true)
     try {
-      const result = await sendTestCampaign(selectedCampaignId, testEmail)
-      if (result.success) {
-        toast.success(`Simulation completed! Email sent to ${testEmail} and stats computed.`)
+      const result = await dispatchCampaignAction({
+        campaignId: selectedCampaignId,
+        mode: sendMode,
+        testEmail: sendMode === "TEST" ? testEmail : undefined,
+        selectedContactIds: sendMode === "SELECTED" ? selectedContactIds : undefined,
+      })
+      if ("sentCount" in result) {
+        toast.success(
+          sendMode === "TEST"
+            ? `Test copy sent successfully to ${testEmail}`
+            : `Campaign dispatched successfully to ${result.sentCount} recipients!`
+        )
         setIsSendTestOpen(false)
         setTestEmail("")
+        setSelectedContactIds([])
         setSelectedCampaignId(null)
         
         // Refresh page or list
         window.location.reload()
       } else {
-        toast.error(result.error || "Simulation failed.")
+        toast.error(result.error || "Campaign send failed.")
       }
     } catch (err) {
       console.error(err)
-      toast.error("Failed to send simulation.")
+      toast.error("Failed to send campaign.")
     } finally {
       setIsSaving(false)
     }
@@ -355,6 +387,10 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
                         {/* Simulation Dispatch Trigger */}
                         <DropdownMenuItem onClick={() => {
                           setSelectedCampaignId(campaign.id)
+                          setSendMode("TEST")
+                          setTestEmail("")
+                          setSelectedContactIds([])
+                          setContactSearch("")
                           setIsSendTestOpen(true)
                         }} className="text-xs">
                           <Send className="mr-1.5 h-3.5 w-3.5 text-blue-500" /> Send / Dispatch Campaign
@@ -406,31 +442,164 @@ export function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
         )}
       </div>
 
-      {/* Send Simulation Dialog Modal */}
+      {/* Send Campaign Wizard Dialog Modal */}
       <Dialog open={isSendTestOpen} onOpenChange={setIsSendTestOpen}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-[460px]">
           <form onSubmit={handleSendTest}>
             <DialogHeader className="pb-3 border-b mb-4">
               <DialogTitle className="text-lg font-bold flex items-center gap-1.5">
-                <Sparkles className="h-5 w-5 text-indigo-500" />
-                Dispatch Email Simulation
+                <Sparkles className="h-5 w-5 text-blue-500" />
+                Send Campaign
               </DialogTitle>
               <DialogDescription className="text-xs">
-                Simulate sending this campaign email to your database list. This will compute open/click rates and mark the campaign COMPLETED.
+                Select your target audience mode and configure the recipients for this email campaign.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="testEmail" className="text-xs font-semibold">Receive Test Copy Email</Label>
-                <Input id="testEmail" type="email" placeholder="tester@yourcompany.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} required />
+              {/* Audience Mode Selection Cards */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Select Target Audience</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSendMode("TEST")}
+                    className={`p-2.5 rounded-lg border text-center transition-all ${
+                      sendMode === "TEST"
+                        ? "border-blue-600 bg-blue-50/50 text-blue-700 font-semibold shadow-xs"
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    <div className="text-xs">Test Email</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSendMode("ALL")}
+                    className={`p-2.5 rounded-lg border text-center transition-all ${
+                      sendMode === "ALL"
+                        ? "border-blue-600 bg-blue-50/50 text-blue-700 font-semibold shadow-xs"
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    <div className="text-xs">All Active ({contacts.length})</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSendMode("SELECTED")}
+                    className={`p-2.5 rounded-lg border text-center transition-all ${
+                      sendMode === "SELECTED"
+                        ? "border-blue-600 bg-blue-50/50 text-blue-700 font-semibold shadow-xs"
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    <div className="text-xs">Select Contacts</div>
+                  </button>
+                </div>
               </div>
+
+              {/* Mode Specific Configurations */}
+              {sendMode === "TEST" && (
+                <div className="grid gap-1.5">
+                  <Label htmlFor="testEmail" className="text-xs font-semibold">Receive Test Copy Email</Label>
+                  <Input
+                    id="testEmail"
+                    type="email"
+                    placeholder="tester@yourcompany.com"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    required
+                    className="h-9 text-xs"
+                  />
+                </div>
+              )}
+
+              {sendMode === "ALL" && (
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800 space-y-1">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-500 fill-blue-500/10" />
+                    Ready to Dispatch
+                  </p>
+                  <p>This will send the campaign to all <strong>{contacts.length}</strong> active contacts in your database. This action cannot be undone.</p>
+                </div>
+              )}
+
+              {sendMode === "SELECTED" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Search active contacts..."
+                      value={contactSearch}
+                      onChange={(e) => setContactSearch(e.target.value)}
+                      className="h-8 text-xs flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedContactIds.length === filteredContacts.length) {
+                          setSelectedContactIds([])
+                        } else {
+                          setSelectedContactIds(filteredContacts.map(c => c.id))
+                        }
+                      }}
+                      className="h-8 text-[10px] px-2"
+                    >
+                      {selectedContactIds.length === filteredContacts.length ? "Deselect All" : "Select All"}
+                    </Button>
+                  </div>
+
+                  <div className="border rounded-lg max-h-48 overflow-y-auto divide-y bg-card text-xs">
+                    {filteredContacts.map(contact => {
+                      const isChecked = selectedContactIds.includes(contact.id)
+                      return (
+                        <label
+                          key={contact.id}
+                          className="flex items-center gap-3 p-2 hover:bg-muted/50 cursor-pointer transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              if (isChecked) {
+                                setSelectedContactIds(selectedContactIds.filter(id => id !== contact.id))
+                              } else {
+                                setSelectedContactIds([...selectedContactIds, contact.id])
+                              }
+                            }}
+                            className="h-3.5 w-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-foreground truncate">
+                              {contact.firstName || contact.lastName
+                                ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim()
+                                : "Unnamed Contact"}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">{contact.email}</p>
+                          </div>
+                        </label>
+                      )
+                    })}
+                    {filteredContacts.length === 0 && (
+                      <div className="p-4 text-center text-muted-foreground text-xs">
+                        No active contacts match your search.
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground flex justify-between px-1">
+                    <span>{selectedContactIds.length} of {filteredContacts.length} contacts selected</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <DialogFooter className="mt-6 pt-4 border-t">
-              <Button variant="outline" type="button" onClick={() => setIsSendTestOpen(false)} disabled={isSaving} className="text-xs h-9">Cancel</Button>
+              <Button variant="outline" type="button" onClick={() => setIsSendTestOpen(false)} disabled={isSaving} className="text-xs h-9">
+                Cancel
+              </Button>
               <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-blue-600 hover:bg-blue-700 text-white">
-                {isSaving ? "Simulating..." : "Trigger Send Simulation"}
+                {isSaving ? "Processing..." : sendMode === "TEST" ? "Send Test Copy" : "Dispatch Campaign Now"}
               </Button>
             </DialogFooter>
           </form>

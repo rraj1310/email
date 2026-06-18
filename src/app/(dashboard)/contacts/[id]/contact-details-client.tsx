@@ -17,6 +17,7 @@ import { updateContact, deleteContact, getTags } from "@/app/actions/contacts"
 import { toast } from "sonner"
 import { TagsSelector, getTagColorClass } from "@/components/contacts/tags-selector"
 import { CountrySelector } from "@/components/contacts/country-selector"
+import { ImageCropperDialog } from "@/components/ui/image-cropper"
 
 type ContactWithTags = Contact & { tags: Tag[] }
 
@@ -59,12 +60,17 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
   const [editAvatarUrl, setEditAvatarUrl] = React.useState(contact.avatarUrl || "")
   const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false)
   const [lightboxPhotoUrl, setLightboxPhotoUrl] = React.useState<string | null>(null)
+  
+  // Cropper states
+  const [cropperSrc, setCropperSrc] = React.useState("")
+  const [isCropperOpen, setIsCropperOpen] = React.useState(false)
+  const [cropperFilename, setCropperFilename] = React.useState("avatar.png")
   const [availableTags, setAvailableTags] = React.useState<string[]>([])
 
   React.useEffect(() => {
     async function loadTags() {
       const res = await getTags()
-      if (res.success && res.data) {
+      if ("data" in res) {
         setAvailableTags(res.data.map(t => t.name))
       }
     }
@@ -99,7 +105,7 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
         tags: editTags
       })
 
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success("Contact details updated successfully.")
         const resData = result.data as ContactWithTags
         setContact(resData)
@@ -124,12 +130,35 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
     }
   }
 
+  const handleCropComplete = async (croppedFile: File) => {
+    setIsUploadingAvatar(true)
+    const formData = new FormData()
+    formData.append("file", croppedFile)
+    try {
+      const res = await fetch("/api/contacts/upload", {
+        method: "POST",
+        body: formData
+      })
+      const result = await res.json()
+      if (result.success && result.url) {
+        setEditAvatarUrl(result.url)
+        toast.success("Profile photo cropped and uploaded!")
+      } else {
+        toast.error(result.error || "Failed to upload photo")
+      }
+    } catch (err) {
+      toast.error("Upload error")
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
+
   const handleDeleteContact = async () => {
     if (!confirm("Are you sure you want to permanently delete this contact?")) return
     
     try {
       const result = await deleteContact(contact.id)
-      if (result.success) {
+      if (!("error" in result)) {
         toast.success("Contact has been deleted.")
         router.push("/contacts")
       } else {
@@ -190,29 +219,19 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
                           className="hidden"
                           id="edit-avatar-upload"
                           disabled={isUploadingAvatar}
-                          onChange={async (e) => {
+                          onChange={(e) => {
                             const file = e.target.files?.[0]
                             if (!file) return
-                            setIsUploadingAvatar(true)
-                            const formData = new FormData()
-                            formData.append("file", file)
-                            try {
-                              const res = await fetch("/api/contacts/upload", {
-                                method: "POST",
-                                body: formData
-                              })
-                              const result = await res.json()
-                              if (result.success && result.url) {
-                                setEditAvatarUrl(result.url)
-                                toast.success("Profile photo uploaded to Cloudinary!")
-                              } else {
-                                toast.error(result.error || "Failed to upload photo")
+                            setCropperFilename(file.name)
+                            const reader = new FileReader()
+                            reader.onload = () => {
+                              if (typeof reader.result === "string") {
+                                setCropperSrc(reader.result)
+                                setIsCropperOpen(true)
                               }
-                            } catch (err) {
-                              toast.error("Upload error")
-                            } finally {
-                              setIsUploadingAvatar(false)
                             }
+                            reader.readAsDataURL(file)
+                            e.target.value = ""
                           }}
                         />
                         <Button
@@ -632,6 +651,15 @@ export function ContactDetailsClient({ contact: initialContact, activities, auto
           </div>
         </div>
       )}
+
+      {/* Profile Picture Cropper Modal */}
+      <ImageCropperDialog
+        open={isCropperOpen}
+        onOpenChange={setIsCropperOpen}
+        imageSrc={cropperSrc}
+        filename={cropperFilename}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   )
 }

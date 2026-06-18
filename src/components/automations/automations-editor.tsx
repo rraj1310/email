@@ -304,7 +304,7 @@ function FlowCanvas({ automationId, initialRule, campaigns }: AutomationsEditorP
         }))
       })
 
-      if (result.success) {
+      if ("data" in result) {
         toast.success("Workflow flow successfully saved!")
       } else {
         toast.error(result.error || "Failed to save workflow changes")
@@ -320,7 +320,7 @@ function FlowCanvas({ automationId, initialRule, campaigns }: AutomationsEditorP
   const handleToggleActive = async () => {
     try {
       const res = await toggleAutomationStatus(automationId)
-      if (res.success) {
+      if ("data" in res) {
         setIsActiveState(res.data?.isActive)
         toast.success(`Automation ${res.data?.isActive ? "activated" : "paused"} successfully.`)
       } else {

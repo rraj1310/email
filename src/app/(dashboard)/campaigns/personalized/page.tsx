@@ -7,8 +7,8 @@ export default async function PersonalizedCampaignPage() {
   const contactsRes = await getContacts()
   const tagsRes = await getTags()
 
-  const contacts = contactsRes.success && contactsRes.data ? contactsRes.data : []
-  const tags = tagsRes.success && tagsRes.data ? tagsRes.data : []
+  const contacts = "data" in contactsRes ? contactsRes.data : []
+  const tags = "data" in tagsRes ? tagsRes.data : []
 
   return <PersonalizedClient initialContacts={contacts} initialTags={tags} />
 }

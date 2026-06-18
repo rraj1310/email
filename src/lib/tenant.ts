@@ -54,3 +54,22 @@ export async function enforceWorkspaceAdmin(): Promise<WorkspaceContext> {
 export async function enforceWorkspaceEditor(): Promise<WorkspaceContext> {
   return enforceRole([UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.SUPER_ADMIN])
 }
+
+/**
+ * Centrally maps common workspace/auth errors to user-friendly messages for Server Actions.
+ */
+export function handleActionError(error: any, fallbackMessage: string) {
+  console.error("Action failed:", error)
+  const message = error instanceof Error ? error.message : String(error)
+  if (message === "UNAUTHORIZED") {
+    return { success: false, error: "Session expired, please sign out and sign back in." }
+  }
+  if (message === "WORKSPACE_NOT_FOUND") {
+    return { success: false, error: "Workspace context not found. Please sign out and sign back in." }
+  }
+  if (message === "FORBIDDEN") {
+    return { success: false, error: "You do not have permission to perform this action." }
+  }
+  return { success: false, error: fallbackMessage }
+}
+

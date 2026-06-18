@@ -1,7 +1,7 @@
 "use server"
 
 import { db as prisma } from "@/lib/db"
-import { getActiveWorkspaceContext, enforceWorkspaceEditor } from "@/lib/tenant"
+import { getActiveWorkspaceContext, enforceWorkspaceEditor, handleActionError } from "@/lib/tenant"
 import { logActivity } from "./dashboard"
 import { inngest } from "@/inngest/client"
 import { enrollContactInWorkflow } from "@/lib/automation-engine"
@@ -217,8 +217,7 @@ export async function getBirthdaySettings() {
       }
     }
   } catch (error: any) {
-    console.error("Failed to load birthday settings:", error)
-    return { success: false, error: error.message || "Failed to load birthday automation settings" }
+    return handleActionError(error, "Failed to load birthday automation settings")
   }
 }
 
@@ -245,8 +244,7 @@ export async function updateBirthdaySettings(enabled: boolean, time: string) {
 
     return { success: true, data: updated }
   } catch (error: any) {
-    console.error("Failed to save birthday settings:", error)
-    return { success: false, error: error.message || "Failed to save settings changes" }
+    return handleActionError(error, "Failed to save settings changes")
   }
 }
 
@@ -264,8 +262,7 @@ export async function triggerBirthdayCheckNow() {
       return { success: false, error: result.error || "Failed to run check" }
     }
   } catch (error: any) {
-    console.error("Manual birthday trigger failed:", error)
-    return { success: false, error: error.message || "Failed manual trigger execution" }
+    return handleActionError(error, "Failed manual trigger execution")
   }
 }
 
@@ -506,8 +503,7 @@ export async function saveSimpleBirthdayMessage(
     // 2. Setup the Automation Rule flow linking to this campaign
     return await saveSimpleBirthdayConfig(campaign.id, enabled, time)
   } catch (error: any) {
-    console.error("Failed to save simple birthday message:", error)
-    return { success: false, error: error.message || "Failed to save settings" }
+    return handleActionError(error, "Failed to save settings")
   }
 }
 

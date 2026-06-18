@@ -120,7 +120,7 @@ export function AICopilotDrawer({
   const applySubjectLine = async (subj: string) => {
     try {
       const result = await updateCampaignMetadata(campaignId, subj, appliedPreview || currentPreview)
-      if (result.success) {
+      if (!("error" in result)) {
         setAppliedSubject(subj)
         if (onUpdateMetadata) {
           onUpdateMetadata(subj, appliedPreview || currentPreview)
@@ -137,7 +137,7 @@ export function AICopilotDrawer({
   const applyPreviewText = async (prev: string) => {
     try {
       const result = await updateCampaignMetadata(campaignId, appliedSubject || currentSubject, prev)
-      if (result.success) {
+      if (!("error" in result)) {
         setAppliedPreview(prev)
         if (onUpdateMetadata) {
           onUpdateMetadata(appliedSubject || currentSubject, prev)

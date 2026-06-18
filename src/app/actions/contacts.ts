@@ -2,7 +2,7 @@
 
 import { db as prisma } from "@/lib/db"
 import { logActivity } from "./dashboard"
-import { getActiveWorkspaceContext, enforceWorkspaceEditor } from "@/lib/tenant"
+import { getActiveWorkspaceContext, enforceWorkspaceEditor, handleActionError } from "@/lib/tenant"
 import { inngest } from "@/inngest/client"
 
 export async function getContacts() {
@@ -20,8 +20,7 @@ export async function getContacts() {
     })
     return { success: true, data: contacts }
   } catch (error) {
-    console.error("Failed to fetch contacts:", error)
-    return { success: false, error: "Failed to fetch contacts" }
+    return handleActionError(error, "Failed to fetch contacts")
   }
 }
 
@@ -45,8 +44,7 @@ export async function getContactById(id: string) {
     if (!contact) return { success: false, error: "Contact not found" }
     return { success: true, data: contact }
   } catch (error) {
-    console.error("Failed to get contact by id:", error)
-    return { success: false, error: "Failed to get contact details" }
+    return handleActionError(error, "Failed to get contact details")
   }
 }
 
@@ -62,8 +60,7 @@ export async function getTags() {
     })
     return { success: true, data: tags }
   } catch (error) {
-    console.error("Failed to fetch tags:", error)
-    return { success: false, error: "Failed to fetch tags" }
+    return handleActionError(error, "Failed to fetch tags")
   }
 }
 
@@ -162,8 +159,7 @@ export async function createContact(data: {
 
     return { success: true, data: contact }
   } catch (error) {
-    console.error("Failed to create contact:", error)
-    return { success: false, error: "Failed to create contact" }
+    return handleActionError(error, "Failed to create contact")
   }
 }
 
@@ -270,8 +266,7 @@ export async function updateContact(id: string, data: {
 
     return { success: true, data: contact }
   } catch (error) {
-    console.error("Failed to update contact:", error)
-    return { success: false, error: "Failed to update contact details" }
+    return handleActionError(error, "Failed to update contact details")
   }
 }
 
@@ -293,8 +288,7 @@ export async function deleteContact(id: string) {
 
     return { success: true }
   } catch (error) {
-    console.error("Failed to delete contact:", error)
-    return { success: false, error: "Failed to delete contact" }
+    return handleActionError(error, "Failed to delete contact")
   }
 }
 
@@ -452,7 +446,6 @@ export async function importContactsAction(contactsList: Array<{
       }
     }
   } catch (error) {
-    console.error("Failed bulk importing contacts:", error)
-    return { success: false, error: "Failed to complete CSV import" }
+    return handleActionError(error, "Failed to complete CSV import")
   }
 }

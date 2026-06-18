@@ -2,7 +2,7 @@
 
 import { db as prisma } from "@/lib/db"
 import { logActivity } from "./dashboard"
-import { getActiveWorkspaceContext, enforceWorkspaceEditor } from "@/lib/tenant"
+import { getActiveWorkspaceContext, enforceWorkspaceEditor, handleActionError } from "@/lib/tenant"
 
 export async function getAutomations() {
   try {
@@ -75,8 +75,7 @@ export async function getAutomations() {
 
     return { success: true, data: enrichedList }
   } catch (error) {
-    console.error("Failed to fetch automations:", error)
-    return { success: false, error: "Failed to load workflows" }
+    return handleActionError(error, "Failed to load workflows")
   }
 }
 
@@ -90,8 +89,7 @@ export async function getAutomationById(id: string) {
     if (!rule) return { success: false, error: "Workflow not found" }
     return { success: true, data: rule }
   } catch (error) {
-    console.error("Failed to load workflow details:", error)
-    return { success: false, error: "Failed to load workflow details" }
+    return handleActionError(error, "Failed to load workflow details")
   }
 }
 
@@ -126,8 +124,7 @@ export async function createAutomation(name: string, triggerType: string) {
 
     return { success: true, data: rule }
   } catch (error) {
-    console.error("Failed to create automation:", error)
-    return { success: false, error: "Failed to create workflow" }
+    return handleActionError(error, "Failed to create workflow")
   }
 }
 
@@ -160,8 +157,7 @@ export async function updateAutomationFlow(id: string, data: {
     await logActivity(`Updated automation workflow flow graph for "${updated.name}"`, "SETTINGS")
     return { success: true, data: updated }
   } catch (error) {
-    console.error("Failed to update workflow flow:", error)
-    return { success: false, error: "Failed to save workflow changes" }
+    return handleActionError(error, "Failed to save workflow changes")
   }
 }
 
@@ -183,8 +179,7 @@ export async function deleteAutomation(id: string) {
 
     return { success: true }
   } catch (error) {
-    console.error("Failed to delete automation:", error)
-    return { success: false, error: "Failed to delete workflow" }
+    return handleActionError(error, "Failed to delete workflow")
   }
 }
 
@@ -211,7 +206,6 @@ export async function toggleAutomationStatus(id: string) {
 
     return { success: true, data: updated }
   } catch (error) {
-    console.error("Failed to toggle automation status:", error)
-    return { success: false, error: "Failed to modify workflow state" }
+    return handleActionError(error, "Failed to modify workflow state")
   }
 }

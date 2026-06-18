@@ -24,11 +24,11 @@ export function DashboardCards({ initialEnabled, emailTime, todayBirthdays }: Da
     setIsUpdating(true)
     try {
       const res = await updateBirthdaySettings(checked, emailTime)
-      if (res.success) {
+      if ("data" in res && res.data) {
         setBdayEnabled(checked)
         toast.success(`Birthday automation ${checked ? "enabled" : "disabled"}`)
       } else {
-        toast.error(res.error || "Failed to update settings")
+        toast.error(("error" in res ? res.error : null) || "Failed to update settings")
       }
     } catch {
       toast.error("Failed to update settings")
@@ -41,10 +41,10 @@ export function DashboardCards({ initialEnabled, emailTime, todayBirthdays }: Da
     setIsTriggering(true)
     try {
       const res = await triggerBirthdayCheckNow()
-      if (res.success) {
+      if ("count" in res) {
         toast.success(`Dispatched ${res.count} birthday email(s) successfully!`)
       } else {
-        toast.error(res.error || "Failed to trigger birthday check")
+        toast.error(("error" in res ? res.error : null) || "Failed to trigger birthday check")
       }
     } catch {
       toast.error("Failed to trigger birthday check")

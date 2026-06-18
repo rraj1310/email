@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   const birthdayResult = await getBirthdaySettings()
   
   // Provide robust defaults if fetch fails
-  const stats = statsResult.success && statsResult.data ? statsResult.data : {
+  const stats = ("data" in statsResult && statsResult.data) ? statsResult.data : {
     totalContacts: 0,
     totalSent: 0,
     openRate: 0,
@@ -24,14 +24,14 @@ export default async function DashboardPage() {
     bounceRate: 0,
     unsubscribeRate: 0,
     totalSuppressed: 0,
-    chartData: [],
-    activities: []
+    chartData: [] as any[],
+    activities: [] as any[]
   }
 
-  const birthdaySettings = birthdayResult.success && birthdayResult.data ? birthdayResult.data : {
+  const birthdaySettings = ("data" in birthdayResult && birthdayResult.data) ? birthdayResult.data : {
     birthdayAutomationEnabled: false,
     birthdayEmailTime: "09:00",
-    todayBirthdays: []
+    todayBirthdays: [] as Array<{ id: string; name: string; email: string }>
   }
 
   return (

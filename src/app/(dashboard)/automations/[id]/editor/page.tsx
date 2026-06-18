@@ -14,12 +14,12 @@ export default async function EditorPage({ params }: EditorPageProps) {
   const id = resolvedParams.id
 
   const ruleResult = await getAutomationById(id)
-  if (!ruleResult.success || !ruleResult.data) {
+  if (!("data" in ruleResult)) {
     redirect("/automations")
   }
 
   const campaignsResult = await getCampaigns()
-  const campaigns = campaignsResult.success && campaignsResult.data ? campaignsResult.data : []
+  const campaigns = "data" in campaignsResult ? campaignsResult.data : []
 
   return (
     <div className="space-y-4 p-6">

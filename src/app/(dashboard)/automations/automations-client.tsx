@@ -67,14 +67,12 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     try {
       setBdayEnabled(checked)
       const res = await saveSimpleBirthdayMessage(bdaySubject, bdayBody, bdayBannerUrl || null, checked, bdayTime)
-      if (res.success) {
+      if ("data" in res && res.data) {
         toast.success(`Birthday emails ${checked ? "activated" : "paused"}.`)
-        if (res.data) {
-          const updated = res.data
-          setWorkflows(prev => prev.some(w => w.id === updated.id) ? prev.map(w => w.id === updated.id ? updated : w) : [updated, ...prev])
-        }
+        const updated = res.data
+        setWorkflows(prev => prev.some(w => w.id === updated.id) ? prev.map(w => w.id === updated.id ? updated : w) : [updated, ...prev])
       } else {
-        toast.error(res.error || "Failed to update state.")
+        toast.error(("error" in res ? res.error : null) || "Failed to update state.")
       }
     } catch (err) {
       toast.error("Failed to update status settings.")
@@ -95,12 +93,12 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     setIsSavingConfig(true)
     try {
       const res = await saveSimpleBirthdayMessage(bdaySubject, bdayBody, bdayBannerUrl || null, bdayEnabled, bdayTime)
-      if (res.success && res.data) {
+      if ("data" in res && res.data) {
         toast.success("Birthday Settings & Template updated successfully!")
         const updatedRule = res.data
         setWorkflows(prev => prev.some(w => w.id === updatedRule.id) ? prev.map(w => w.id === updatedRule.id ? updatedRule : w) : [updatedRule, ...prev])
       } else {
-        toast.error(res.error || "Failed to save settings.")
+        toast.error(("error" in res ? res.error : null) || "Failed to save settings.")
       }
     } catch (err) {
       console.error(err)
@@ -147,10 +145,10 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     setIsTriggeringNow(true)
     try {
       const res = await triggerBirthdayCheckNow()
-      if (res.success) {
+      if ("count" in res) {
         toast.success(`${res.count} birthday email(s) dispatched successfully!`)
       } else {
-        toast.error(res.error || "Failed to trigger birthday check.")
+        toast.error(("error" in res ? res.error : null) || "Failed to trigger birthday check.")
       }
     } catch (err) {
       toast.error("Failed to execute check.")
@@ -167,7 +165,7 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     setIsSaving(true)
     try {
       const result = await createAutomation(newWorkflowName, newTriggerType)
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success("Workflow created successfully!")
         setWorkflows([result.data, ...workflows])
         setNewWorkflowName("")
@@ -188,7 +186,7 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
   const handleToggle = async (id: string) => {
     try {
       const result = await toggleAutomationStatus(id)
-      if (result.success && result.data) {
+      if ("data" in result) {
         toast.success("Workflow state modified.")
         setWorkflows(workflows.map(w => w.id === id ? result.data : w))
       } else {
@@ -206,7 +204,7 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
 
     try {
       const result = await deleteAutomation(id)
-      if (result.success) {
+      if (!("error" in result)) {
         toast.success("Workflow deleted successfully.")
         setWorkflows(workflows.filter(w => w.id !== id))
       } else {

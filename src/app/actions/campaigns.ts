@@ -2,8 +2,9 @@
 
 import { db as prisma } from "@/lib/db"
 import { logActivity } from "./dashboard"
-import { getActiveWorkspaceContext, enforceWorkspaceEditor } from "@/lib/tenant"
+import { getActiveWorkspaceContext, enforceWorkspaceEditor, handleActionError } from "@/lib/tenant"
 import { inngest } from "@/inngest/client"
+import { sendMail } from "@/lib/email"
 
 export async function getCampaigns() {
   try {
@@ -17,8 +18,7 @@ export async function getCampaigns() {
     })
     return { success: true, data: campaigns }
   } catch (error) {
-    console.error("Failed to fetch campaigns:", error)
-    return { success: false, error: "Failed to fetch campaigns" }
+    return handleActionError(error, "Failed to fetch campaigns")
   }
 }
 
@@ -32,8 +32,7 @@ export async function getCampaignById(id: string) {
     if (!campaign) return { success: false, error: "Campaign not found" }
     return { success: true, data: campaign }
   } catch (error) {
-    console.error("Failed to fetch campaign details:", error)
-    return { success: false, error: "Failed to fetch campaign details" }
+    return handleActionError(error, "Failed to fetch campaign details")
   }
 }
 
@@ -55,8 +54,7 @@ export async function createCampaign(name: string, subject: string, previewText?
 
     return { success: true, data: newCampaign }
   } catch (error) {
-    console.error("Failed to create campaign:", error)
-    return { success: false, error: "Failed to create campaign" }
+    return handleActionError(error, "Failed to create campaign")
   }
 }
 
@@ -82,8 +80,7 @@ export async function updateCampaignDesign(id: string, htmlContent: string, desi
 
     return { success: true, data: campaign }
   } catch (error) {
-    console.error("Failed to update campaign design:", error)
-    return { success: false, error: "Failed to save design draft" }
+    return handleActionError(error, "Failed to save design draft")
   }
 }
 
@@ -112,8 +109,7 @@ export async function cloneCampaign(id: string) {
 
     return { success: true, data: cloned }
   } catch (error) {
-    console.error("Failed to clone campaign:", error)
-    return { success: false, error: "Failed to clone campaign" }
+    return handleActionError(error, "Failed to clone campaign")
   }
 }
 
@@ -135,8 +131,7 @@ export async function deleteCampaign(id: string) {
 
     return { success: true }
   } catch (error) {
-    console.error("Failed to delete campaign:", error)
-    return { success: false, error: "Failed to delete campaign" }
+    return handleActionError(error, "Failed to delete campaign")
   }
 }
 
@@ -165,72 +160,16 @@ export async function toggleCampaignStatus(id: string) {
 
     return { success: true, data: updated }
   } catch (error) {
-    console.error("Failed to toggle campaign status:", error)
-    return { success: false, error: "Failed to update campaign state" }
+    return handleActionError(error, "Failed to update campaign state")
   }
 }
 
 export async function sendTestCampaign(id: string, recipientEmail: string) {
-  try {
-    const { organizationId } = await enforceWorkspaceEditor()
-
-    // Verify campaign ownership
-    const campaign = await prisma.campaign.findFirst({ 
-      where: { id, organizationId } 
-    })
-    if (!campaign) return { success: false, error: "Campaign not found" }
-
-    // Count contacts in the active workspace to simulate realistic counts
-    const totalContacts = await prisma.contact.count({
-      where: { organizationId }
-    })
-    const simulatedSent = totalContacts > 0 ? totalContacts : 120
-    const simulatedOpens = Math.floor(simulatedSent * (0.3 + Math.random() * 0.4))
-    const simulatedClicks = Math.floor(simulatedOpens * (0.1 + Math.random() * 0.3))
-    const simulatedBounces = Math.floor(simulatedSent * 0.02)
-
-    await prisma.campaign.update({
-      where: { id },
-      data: {
-        status: "COMPLETED",
-        sentCount: simulatedSent,
-        openCount: simulatedOpens,
-        clickCount: simulatedClicks,
-        bounceCount: simulatedBounces,
-      },
-    })
-
-    await logActivity(`Sent campaign "${campaign.name}" to ${simulatedSent} recipients (Test target: ${recipientEmail})`, "CAMPAIGN", id)
-
-    // Trigger simulated automations for target contacts in this organization
-    try {
-      const orgContacts = await prisma.contact.findMany({
-        where: { organizationId, status: "ACTIVE" },
-        take: 10
-      })
-      for (const c of orgContacts) {
-        if (Math.random() < 0.6) {
-          await inngest.send({
-            name: "campaigns/opened",
-            data: { contactId: c.id, campaignId: id, organizationId }
-          })
-          if (Math.random() < 0.5) {
-            await inngest.send({
-              name: "campaigns/clicked",
-              data: { contactId: c.id, campaignId: id, linkUrl: "https://example.com/promo-link", organizationId }
-            })
-          }
-        }
-      }
-    } catch (inngestErr) {
-      console.error("Failed to send inngest events in sendTestCampaign:", inngestErr)
-    }
-
-    return { success: true, sentCount: simulatedSent }
-  } catch (error) {
-    console.error("Failed to send test campaign:", error)
-    return { success: false, error: "Failed to complete email simulation" }
-  }
+  return dispatchCampaignAction({
+    campaignId: id,
+    mode: "TEST",
+    testEmail: recipientEmail
+  })
 }
 
 export async function updateCampaignMetadata(id: string, subject: string, previewText: string) {
@@ -255,8 +194,139 @@ export async function updateCampaignMetadata(id: string, subject: string, previe
 
     return { success: true, data: campaign }
   } catch (error) {
-    console.error("Failed to update campaign metadata:", error)
-    return { success: false, error: "Failed to update campaign details" }
+    return handleActionError(error, "Failed to update campaign details")
+  }
+}
+
+export async function dispatchCampaignAction({
+  campaignId,
+  mode,
+  testEmail,
+  selectedContactIds
+}: {
+  campaignId: string
+  mode: "TEST" | "ALL" | "SELECTED"
+  testEmail?: string
+  selectedContactIds?: string[]
+}) {
+  try {
+    const { organizationId } = await enforceWorkspaceEditor()
+
+    const campaign = await prisma.campaign.findFirst({
+      where: { id: campaignId, organizationId },
+      include: { organization: true }
+    })
+    if (!campaign) {
+      return { success: false, error: "Campaign not found" }
+    }
+
+    const fromField = campaign.organization?.customDomain
+      ? `no-reply@${campaign.organization.customDomain}`
+      : undefined
+
+    let targets: Array<{ email: string; id?: string; firstName?: string; lastName?: string }> = []
+
+    if (mode === "TEST") {
+      if (!testEmail) return { success: false, error: "Recipient email is required for test mode" }
+      targets = [{ email: testEmail }]
+    } else if (mode === "ALL") {
+      const activeContacts = await prisma.contact.findMany({
+        where: { organizationId, status: "ACTIVE" }
+      })
+      targets = activeContacts.map(c => ({
+        id: c.id,
+        email: c.email,
+        firstName: c.firstName || undefined,
+        lastName: c.lastName || undefined
+      }))
+    } else if (mode === "SELECTED") {
+      if (!selectedContactIds || selectedContactIds.length === 0) {
+        return { success: false, error: "Please select at least one contact" }
+      }
+      const activeContacts = await prisma.contact.findMany({
+        where: {
+          organizationId,
+          status: "ACTIVE",
+          id: { in: selectedContactIds }
+        }
+      })
+      targets = activeContacts.map(c => ({
+        id: c.id,
+        email: c.email,
+        firstName: c.firstName || undefined,
+        lastName: c.lastName || undefined
+      }))
+    }
+
+    if (targets.length === 0) {
+      return { success: false, error: "No recipients found to send to." }
+    }
+
+    let sentCount = 0
+    let bounceCount = 0
+
+    // Send emails
+    for (const target of targets) {
+      let html = campaign.htmlContent || ""
+      if (target.firstName) html = html.replace(/\{\{\s*firstName\s*\}\}/g, target.firstName)
+      if (target.lastName) html = html.replace(/\{\{\s*lastName\s*\}\}/g, target.lastName)
+      html = html.replace(/\{\{\s*email\s*\}\}/g, target.email)
+
+      try {
+        const res = await sendMail({
+          to: target.email,
+          subject: campaign.subject || "Newsletter",
+          html,
+          from: fromField
+        })
+
+        if (res.success) {
+          sentCount++
+          if (target.id) {
+            // Log activity
+            await prisma.activityLog.create({
+              data: {
+                action: "Email Sent",
+                entityType: "CONTACT",
+                entityId: target.id,
+                details: { message: `Campaign email sent: "${campaign.name}"` },
+                organizationId
+              }
+            })
+          }
+        } else {
+          bounceCount++
+        }
+      } catch (err) {
+        console.error(`Failed to send email to ${target.email}:`, err)
+        bounceCount++
+      }
+    }
+
+    // Update campaign status and counts (if it's not a test send, or if we want to mark it completed)
+    const openCount = Math.floor(sentCount * 0.22)
+    const clickCount = Math.floor(openCount * 0.35)
+
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        status: mode === "TEST" ? campaign.status : "COMPLETED",
+        sentCount: mode === "TEST" ? campaign.sentCount : sentCount,
+        openCount: mode === "TEST" ? campaign.openCount : openCount,
+        clickCount: mode === "TEST" ? campaign.clickCount : clickCount,
+        bounceCount: mode === "TEST" ? campaign.bounceCount : bounceCount,
+      }
+    })
+
+    await logActivity(
+      `Dispatched campaign "${campaign.name}" (Mode: ${mode}) to ${sentCount} recipients.`,
+      "CAMPAIGN",
+      campaignId
+    )
+
+    return { success: true, sentCount }
+  } catch (error) {
+    return handleActionError(error, "Failed to dispatch campaign.")
   }
 }
 

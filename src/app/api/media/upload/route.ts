@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: dbResult.error }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, data: dbResult.data })
+    return NextResponse.json({ success: true, data: dbResult.data, url: fileUrl })
   } catch (error) {
     console.error("Upload API error:", error)
     return NextResponse.json({ success: false, error: "Failed to upload file" }, { status: 500 })

@@ -5,7 +5,7 @@ import { ContactsClient } from "./contacts-client"
 
 export default async function ContactsPage() {
   const result = await getContacts()
-  const contacts = (result.success && result.data) ? result.data : []
+  const contacts = "data" in result ? result.data : []
 
   return <ContactsClient initialContacts={contacts} />
 }

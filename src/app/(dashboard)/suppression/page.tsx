@@ -7,8 +7,8 @@ export default async function SuppressionPage() {
   const listResult = await getSuppressionList()
   const statsResult = await getSuppressionStats()
 
-  const list = listResult.success && listResult.data ? listResult.data : []
-  const stats = statsResult.success && statsResult.data ? statsResult.data : {
+  const list = ("data" in listResult && listResult.data) ? listResult.data : []
+  const stats = ("data" in statsResult && statsResult.data) ? statsResult.data : {
     unsubscribed: 0,
     bounced: 0,
     complained: 0,

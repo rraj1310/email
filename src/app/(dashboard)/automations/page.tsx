@@ -7,17 +7,22 @@ import { AutomationsClient } from "./automations-client"
 
 export default async function AutomationsPage() {
   const result = await getAutomations()
-  const list = result.success && result.data ? result.data : []
+  const list = ("data" in result && result.data) ? result.data : []
 
   const bdayResult = await getBirthdaySettings()
-  const birthdaySettings = bdayResult.success && bdayResult.data ? bdayResult.data : {
+  const birthdaySettings = ("data" in bdayResult && bdayResult.data) ? bdayResult.data : {
     birthdayAutomationEnabled: false,
     birthdayEmailTime: "09:00",
-    todayBirthdays: [] as Array<{ id: string; name: string; email: string }>
+    todayBirthdays: [] as Array<{ id: string; name: string; email: string }>,
+    templateConfig: {
+      subject: "Happy Birthday! 🎂",
+      bodyText: "Wishing you a wonderful year ahead filled with happiness and success!",
+      bannerUrl: ""
+    }
   }
 
   const campaignsResult = await getCampaigns()
-  const campaigns = campaignsResult.success && campaignsResult.data ? campaignsResult.data : []
+  const campaigns = ("data" in campaignsResult && campaignsResult.data) ? campaignsResult.data : []
 
   return (
     <AutomationsClient 

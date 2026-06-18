@@ -8,15 +8,15 @@ export default async function ReportsPage() {
   const statsResult = await getDashboardStats()
   const campaignsResult = await getCampaigns()
 
-  const stats = statsResult.success && statsResult.data ? statsResult.data : {
+  const stats = ("data" in statsResult && statsResult.data) ? statsResult.data : {
     openRate: 0,
     clickRate: 0,
     bounceRate: 0,
     unsubscribeRate: 0,
-    chartData: []
+    chartData: [] as any[]
   }
 
-  const campaigns = campaignsResult.success && campaignsResult.data ? campaignsResult.data : []
+  const campaigns = "data" in campaignsResult ? campaignsResult.data : []
   
   // Format comparison data for chart: only SENT or COMPLETED campaigns that have dispatched
   const campaignData = campaigns

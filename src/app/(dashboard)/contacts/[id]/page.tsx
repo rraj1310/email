@@ -13,7 +13,7 @@ export default async function ContactDetailsPage({ params }: PageProps) {
   const resolvedParams = await params
   const result = await getContactById(resolvedParams.id)
 
-  if (!result.success || !result.data) {
+  if (!("data" in result) || !result.data) {
     notFound()
   }
 

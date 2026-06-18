@@ -1,0 +1,371 @@
+"use client"
+
+import * as React from "react"
+import { usePathname } from "next/navigation"
+import {
+  Bot,
+  Command,
+  LifeBuoy,
+  PieChart,
+  Settings2,
+  Users,
+  Megaphone,
+  Image as ImageIcon,
+  ShieldAlert,
+  BarChart,
+  ChevronsUpDown,
+  Plus,
+  Building2,
+  Check,
+  Loader2,
+} from "lucide-react"
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarSeparator,
+} from "@/components/ui/sidebar"
+import Link from "next/link"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { getWorkspaces, switchWorkspace, createWorkspace } from "@/app/actions/workspace"
+import { PlanType } from "@/lib/plans"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+
+const data = {
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: PieChart,
+    },
+    {
+      title: "Contacts",
+      url: "/contacts",
+      icon: Users,
+    },
+    {
+      title: "Campaigns",
+      url: "/campaigns",
+      icon: Megaphone,
+    },
+    {
+      title: "Automations",
+      url: "/automations",
+      icon: Bot,
+    },
+    {
+      title: "Media Library",
+      url: "/media",
+      icon: ImageIcon,
+    },
+    {
+      title: "Suppression",
+      url: "/suppression",
+      icon: ShieldAlert,
+    },
+    {
+      title: "Reports",
+      url: "/reports",
+      icon: BarChart,
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: Settings2,
+    },
+  ],
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [orgName, setOrgName] = React.useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("org_name")
+      return stored || "Acme Corp"
+    }
+    return "Acme Corp"
+  })
+
+  const [workspaces, setWorkspaces] = React.useState<Array<{
+    id: string
+    name: string
+    plan: PlanType
+    role: string
+    color: string | null
+    logo: string | null
+  }>>([])
+  const [activeWorkspace, setActiveWorkspace] = React.useState<{
+    id: string
+    name: string
+    plan: PlanType
+    role: string
+  } | null>(null)
+  
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false)
+  const [newWorkspaceName, setNewWorkspaceName] = React.useState("")
+  const [isCreating, setIsCreating] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  const loadWorkspaces = React.useCallback(async () => {
+    try {
+      const res = await getWorkspaces()
+      if (res.success && res.data) {
+        setWorkspaces(res.data)
+        if (typeof window !== "undefined") {
+          const storedOrgId = localStorage.getItem("active_org_id")
+          const active = res.data.find(w => w.id === storedOrgId) || res.data[0]
+          if (active) {
+            setActiveWorkspace({
+              id: active.id,
+              name: active.name,
+              plan: active.plan,
+              role: active.role
+            })
+            localStorage.setItem("active_org_id", active.id)
+            localStorage.setItem("org_name", active.name)
+            setOrgName(active.name)
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadWorkspaces()
+  }, [loadWorkspaces])
+
+  // Listen for storage updates to keep sidebar synced
+  React.useEffect(() => {
+    const handleStorage = () => {
+      const updated = localStorage.getItem("org_name")
+      if (updated) setOrgName(updated)
+    }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
+
+  const handleSwitch = async (id: string) => {
+    const toastId = toast.loading("Switching workspace...")
+    try {
+      const res = await switchWorkspace(id)
+      if (res.success) {
+        localStorage.setItem("active_org_id", id)
+        const newActive = workspaces.find(w => w.id === id)
+        if (newActive) {
+          localStorage.setItem("org_name", newActive.name)
+          setActiveWorkspace({
+            id: newActive.id,
+            name: newActive.name,
+            plan: newActive.plan,
+            role: newActive.role
+          })
+          setOrgName(newActive.name)
+        }
+        toast.success("Workspace switched!", { id: toastId })
+        window.location.reload()
+      } else {
+        toast.error(res.error || "Failed to switch workspace", { id: toastId })
+      }
+    } catch (err) {
+      toast.error("An error occurred", { id: toastId })
+    }
+  }
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newWorkspaceName.trim()) return
+    setIsCreating(true)
+    try {
+      const res = await createWorkspace(newWorkspaceName)
+      if (res.success && res.data) {
+        toast.success("Workspace created!")
+        setIsCreateOpen(false)
+        setNewWorkspaceName("")
+        localStorage.setItem("active_org_id", res.data.id)
+        localStorage.setItem("org_name", res.data.name)
+        window.location.reload()
+      } else {
+        toast.error(res.error || "Failed to create workspace")
+      }
+    } catch (err) {
+      toast.error("Failed to create workspace")
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors"
+                  />
+                }
+              >
+                <div className="bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-md">
+                  <Building2 className="size-4 animate-pulse" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold text-foreground">
+                    {activeWorkspace?.name || orgName}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
+                    {activeWorkspace?.plan ? `${activeWorkspace.plan} Plan` : "Email Marketing Hub"}
+                  </span>
+                </div>
+                <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                align="start"
+                side="bottom"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Workspaces</DropdownMenuLabel>
+                {workspaces.map((workspace) => (
+                  <DropdownMenuItem
+                    key={workspace.id}
+                    onClick={() => handleSwitch(workspace.id)}
+                    className="gap-2 p-2 focus:bg-sidebar-accent cursor-pointer"
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-md border bg-background text-xs font-medium text-foreground">
+                      {workspace.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="font-medium text-sm">{workspace.name}</div>
+                      <div className="text-[10px] text-muted-foreground">{workspace.plan} Plan • {workspace.role}</div>
+                    </div>
+                    {activeWorkspace?.id === workspace.id && (
+                      <Check className="ml-auto size-4 text-blue-500" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 p-2 cursor-pointer focus:bg-sidebar-accent text-blue-600 dark:text-blue-400 font-medium"
+                  onClick={() => setIsCreateOpen(true)}
+                >
+                  <div className="flex size-6 items-center justify-center rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40">
+                    <Plus className="size-4" />
+                  </div>
+                  <div className="text-sm">Create Workspace</div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarSeparator />
+      <SidebarContent>
+        <SidebarMenu>
+          {data.navMain.map((item) => {
+            const isActive = item.url === "/" 
+              ? pathname === "/" 
+              : pathname === item.url || pathname.startsWith(item.url + "/")
+
+            return (
+              <SidebarMenuItem key={item.title}>
+                <Link href={item.url} passHref legacyBehavior>
+                  <SidebarMenuButton 
+                    tooltip={item.title} 
+                    isActive={isActive}
+                    className={`transition-all duration-200 ${
+                      isActive 
+                        ? "bg-primary text-primary-foreground font-semibold shadow-sm scale-[1.02]" 
+                        : "hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <item.icon className={`size-4 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            )
+          })}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Link href="/settings" passHref legacyBehavior>
+              <SidebarMenuButton className="hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground">
+                <LifeBuoy className="size-4" />
+                <span>Support & Settings</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <form onSubmit={handleCreate}>
+            <DialogHeader>
+              <DialogTitle>Create Workspace</DialogTitle>
+              <DialogDescription>
+                Add a new workspace to organize your campaigns, contacts, and custom templates.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="newWorkspaceName">Workspace Name</Label>
+                <Input
+                  id="newWorkspaceName"
+                  placeholder="e.g. Acme Corp Retail"
+                  value={newWorkspaceName}
+                  onChange={(e) => setNewWorkspaceName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreating} className="bg-blue-600 hover:bg-blue-700 text-white">
+                {isCreating && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                Create Workspace
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </Sidebar>
+  )
+}

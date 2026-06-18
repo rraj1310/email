@@ -254,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {activeWorkspace?.name || orgName}
                   </span>
                   <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
-                    {activeWorkspace?.plan ? `${activeWorkspace.plan} Plan` : "Email Marketing"}
+                    {activeWorkspace ? `Role: ${activeWorkspace.role}` : "Email Marketing"}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
@@ -277,7 +277,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </div>
                     <div className="flex-1 text-left">
                       <div className="font-medium text-sm">{workspace.name}</div>
-                      <div className="text-[10px] text-muted-foreground">{workspace.plan} Plan • {workspace.role}</div>
+                      <div className="text-[10px] text-muted-foreground">Role: {workspace.role}</div>
                     </div>
                     {activeWorkspace?.id === workspace.id && (
                       <Check className="ml-auto size-4 text-blue-500" />

@@ -75,7 +75,7 @@ export async function generateText(options: {
 
     // 3. Enforce Rate Limiting Quotas (By-pass if customer-managed API key is supplied)
     if (!isCustomKey) {
-      const dailyLimit = org.plan === "FREE" ? 15 : org.plan === "STARTER" ? 100 : org.plan === "PRO" ? 500 : 5000
+      const dailyLimit = 10000
       
       const startOfDay = new Date()
       startOfDay.setHours(0, 0, 0, 0)
@@ -91,7 +91,7 @@ export async function generateText(options: {
         return {
           success: false,
           text: "",
-          error: `Daily AI usage quota exceeded (${todayCount}/${dailyLimit} used). Please upgrade your subscription plan or add a custom API key under Settings to unlock unlimited calls.`
+          error: `Daily AI usage quota exceeded (${todayCount}/${dailyLimit} used). Please add a custom API key under Settings to unlock unlimited calls.`
         }
       }
     }

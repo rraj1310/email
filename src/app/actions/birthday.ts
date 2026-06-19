@@ -187,7 +187,9 @@ export async function getBirthdaySettings() {
     let templateConfig = {
       subject: "Happy Birthday! 🎂",
       bodyText: "Wishing you a wonderful year ahead filled with happiness and success!",
-      bannerUrl: ""
+      bannerUrl: "",
+      promoAttachmentUrl: "",
+      promoAttachmentName: "",
     }
 
     if (campaign && campaign.designContent) {
@@ -199,7 +201,9 @@ export async function getBirthdaySettings() {
           templateConfig = {
             subject: parsed.subject || templateConfig.subject,
             bodyText: parsed.bodyText || templateConfig.bodyText,
-            bannerUrl: parsed.bannerUrl || ""
+            bannerUrl: parsed.bannerUrl || "",
+            promoAttachmentUrl: parsed.promoAttachmentUrl || "",
+            promoAttachmentName: parsed.promoAttachmentName || "",
           }
         }
       } catch (e) {
@@ -365,6 +369,10 @@ export async function saveSimpleBirthdayConfig(campaignId: string, enabled: bool
 
 function buildBirthdayEmailHtml(subject: string, bodyText: string, bannerUrl: string | null) {
   const formattedBody = bodyText.replace(/\n/g, '<br />')
+  const containerStyle = bannerUrl
+    ? `background: url('${bannerUrl}') no-repeat center/cover;`
+    : `background: linear-gradient(135deg, #08120d 0%, #0f3026 100%);`
+
   return `<!DOCTYPE html>
 <html>
   <head>
@@ -374,83 +382,71 @@ function buildBirthdayEmailHtml(subject: string, bodyText: string, bannerUrl: st
     <style>
       body {
         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background-color: #f8fafc;
+        background-color: #030706;
         margin: 0;
         padding: 0;
         -webkit-font-smoothing: antialiased;
       }
-      .container {
-        max-width: 600px;
-        margin: 40px auto;
-        background-color: #ffffff;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e2e8f0;
-      }
-      .banner-container {
+      .wrapper {
         width: 100%;
-        text-align: center;
-        background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+        padding: 40px 0;
+        background-color: #030706;
       }
-      .banner-img {
-        max-width: 100%;
-        height: auto;
-        display: block;
+      .container {
+        max-width: 540px;
         margin: 0 auto;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        ${containerStyle}
       }
-      .content {
-        padding: 40px 30px;
+      .overlay-card {
+        background-color: rgba(6, 15, 13, 0.88);
+        border-radius: 16px;
+        margin: 40px 20px;
+        padding: 35px 25px;
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        text-align: center;
       }
       .title {
-        font-size: 26px;
+        font-size: 28px;
         font-weight: 800;
-        color: #0f172a;
+        color: #10b981;
         margin-top: 0;
         margin-bottom: 20px;
-        text-align: center;
+        letter-spacing: -0.02em;
+        text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
       }
       .message {
         font-size: 16px;
         line-height: 1.8;
-        color: #334155;
-        margin-bottom: 30px;
+        color: #e2e8f0;
+        margin-bottom: 0;
       }
       .footer {
-        padding: 25px;
-        background-color: #f8fafc;
-        border-top: 1px solid #e2e8f0;
+        padding: 20px;
         text-align: center;
-        font-size: 12px;
-        color: #64748b;
-      }
-      .tag-note {
         font-size: 11px;
-        color: #94a3b8;
-        margin-top: 15px;
-        text-align: center;
+        color: #64748b;
+        background-color: rgba(6, 15, 13, 0.95);
+        border-top: 1px solid rgba(16, 185, 129, 0.1);
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      \${bannerUrl ? \`
-      <div class="banner-container">
-        <img class="banner-img" src="\${bannerUrl}" alt="Birthday Celebration" />
-      </div>
-      \` : \`
-      <div style="height: 120px; background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%); display: flex; align-items: center; justify-content: center;">
-        <span style="font-size: 42px;">🎂</span>
-      </div>
-      \`}
-      <div class="content">
-        <h1 class="title">Happy Birthday!</h1>
-        <div class="message">
-          \${formattedBody}
+    <div class="wrapper">
+      <div class="container">
+        <div class="overlay-card">
+          <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+          <h1 class="title">${subject}</h1>
+          <div class="message">
+            ${formattedBody}
+          </div>
         </div>
-      </div>
-      <div class="footer">
-        © \${new Date().getFullYear()} Workspace Automations. All rights reserved.
+        <div class="footer">
+          © ${new Date().getFullYear()} Workspace Automations. All rights reserved.
+        </div>
       </div>
     </div>
   </body>
@@ -462,7 +458,9 @@ export async function saveSimpleBirthdayMessage(
   bodyText: string,
   bannerUrl: string | null,
   enabled: boolean,
-  time: string
+  time: string,
+  promoAttachmentUrl?: string | null,
+  promoAttachmentName?: string | null
 ) {
   try {
     const { organizationId } = await enforceWorkspaceEditor()
@@ -476,7 +474,13 @@ export async function saveSimpleBirthdayMessage(
     })
 
     const htmlContent = buildBirthdayEmailHtml(subject, bodyText, bannerUrl)
-    const designContent = { subject, bodyText, bannerUrl }
+    const designContent = { 
+      subject, 
+      bodyText, 
+      bannerUrl,
+      promoAttachmentUrl: promoAttachmentUrl || "",
+      promoAttachmentName: promoAttachmentName || "",
+    }
 
     if (campaign) {
       campaign = await prisma.campaign.update({

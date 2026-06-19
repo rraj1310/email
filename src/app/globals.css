@@ -50,36 +50,36 @@
 }
 
 :root {
-  /* Ultra-premium Light Theme: Lavender/Violet tint (increased contrast) */
-  --background: oklch(0.965 0.02 285);
-  --foreground: oklch(0.18 0.05 285);
+  /* Ultra-premium Light Theme: Teal/Emerald tint (increased contrast) */
+  --background: oklch(0.97 0.01 165);
+  --foreground: oklch(0.18 0.03 165);
   
   --card: oklch(1 0 0 / 0.65);
-  --card-foreground: oklch(0.18 0.05 285);
+  --card-foreground: oklch(0.18 0.03 165);
   
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.05 285);
+  --popover-foreground: oklch(0.18 0.03 165);
   
-  /* Vibrant Royal Indigo/Violet Primary */
-  --primary: oklch(0.53 0.22 281);
-  --primary-foreground: oklch(0.99 0.005 281);
+  /* Luminous Teal/Mint Green Primary */
+  --primary: oklch(0.58 0.16 162);
+  --primary-foreground: oklch(0.99 0.005 162);
   
-  /* Soft Lavender Muted Secondary */
-  --secondary: oklch(0.92 0.04 285);
-  --secondary-foreground: oklch(0.35 0.12 285);
+  /* Soft Emerald Muted Secondary */
+  --secondary: oklch(0.92 0.02 165);
+  --secondary-foreground: oklch(0.35 0.05 165);
   
-  --muted: oklch(0.93 0.03 285);
-  --muted-foreground: oklch(0.45 0.07 285);
+  --muted: oklch(0.93 0.015 165);
+  --muted-foreground: oklch(0.45 0.04 165);
   
-  --accent: oklch(0.9 0.06 285);
-  --accent-foreground: oklch(0.4 0.15 285);
+  --accent: oklch(0.9 0.03 165);
+  --accent-foreground: oklch(0.4 0.06 165);
   
   --destructive: oklch(0.6 0.21 28);
-  --border: oklch(0.9 0.04 285);
-  --input: oklch(0.9 0.04 285);
-  --ring: oklch(0.53 0.22 281);
+  --border: oklch(0.9 0.02 165);
+  --input: oklch(0.9 0.02 165);
+  --ring: oklch(0.58 0.16 162);
   
-  --chart-1: oklch(0.6 0.22 280);
+  --chart-1: oklch(0.58 0.16 162);
   --chart-2: oklch(0.7 0.18 200);
   --chart-3: oklch(0.65 0.2 340);
   --chart-4: oklch(0.58 0.18 40);
@@ -87,59 +87,59 @@
   --radius: 0.75rem;
   
   /* Sidebar styles matching the premium colorful layout */
-  --sidebar: oklch(0.955 0.025 285);
-  --sidebar-foreground: oklch(0.25 0.05 285);
-  --sidebar-primary: oklch(0.53 0.22 281);
-  --sidebar-primary-foreground: oklch(0.99 0.005 281);
-  --sidebar-accent: oklch(0.92 0.04 285);
-  --sidebar-accent-foreground: oklch(0.35 0.12 285);
-  --sidebar-border: oklch(0.9 0.04 285);
-  --sidebar-ring: oklch(0.53 0.22 281);
+  --sidebar: oklch(0.96 0.015 165);
+  --sidebar-foreground: oklch(0.25 0.03 165);
+  --sidebar-primary: oklch(0.58 0.16 162);
+  --sidebar-primary-foreground: oklch(0.99 0.005 162);
+  --sidebar-accent: oklch(0.92 0.02 165);
+  --sidebar-accent-foreground: oklch(0.35 0.05 165);
+  --sidebar-border: oklch(0.9 0.02 165);
+  --sidebar-ring: oklch(0.58 0.16 162);
 }
 
 .dark {
-  /* Ultra-premium Dark Theme: Space indigo black */
-  --background: oklch(0.12 0.03 285);
-  --foreground: oklch(0.98 0.01 285);
+  /* Ultra-premium Dark Theme: Space emerald/teal black (Verve theme base) */
+  --background: oklch(0.06 0.015 165);
+  --foreground: oklch(0.98 0.01 165);
   
-  --card: oklch(0.15 0.04 285 / 0.65);
-  --card-foreground: oklch(0.98 0.01 285);
+  --card: oklch(0.09 0.02 165 / 0.65);
+  --card-foreground: oklch(0.98 0.01 165);
   
-  --popover: oklch(0.15 0.04 285);
-  --popover-foreground: oklch(0.98 0.01 285);
+  --popover: oklch(0.09 0.02 165);
+  --popover-foreground: oklch(0.98 0.01 165);
   
-  /* Electric Lavender/Violet Primary */
-  --primary: oklch(0.68 0.19 281);
-  --primary-foreground: oklch(0.1 0.03 281);
+  /* Electric Luminous Mint Green/Teal Primary */
+  --primary: oklch(0.76 0.18 162);
+  --primary-foreground: oklch(0.08 0.04 162);
   
-  --secondary: oklch(0.22 0.05 285);
-  --secondary-foreground: oklch(0.92 0.02 285);
+  --secondary: oklch(0.14 0.03 165);
+  --secondary-foreground: oklch(0.92 0.02 165);
   
-  --muted: oklch(0.2 0.04 285);
-  --muted-foreground: oklch(0.65 0.03 285);
+  --muted: oklch(0.12 0.02 165);
+  --muted-foreground: oklch(0.65 0.03 165);
   
-  --accent: oklch(0.22 0.05 285);
-  --accent-foreground: oklch(0.92 0.02 285);
+  --accent: oklch(0.14 0.03 165);
+  --accent-foreground: oklch(0.92 0.02 165);
   
   --destructive: oklch(0.5 0.18 28);
-  --border: oklch(0.22 0.05 285);
-  --input: oklch(0.22 0.05 285);
-  --ring: oklch(0.68 0.19 281);
+  --border: oklch(0.14 0.03 165);
+  --input: oklch(0.14 0.03 165);
+  --ring: oklch(0.76 0.18 162);
   
-  --chart-1: oklch(0.68 0.19 281);
+  --chart-1: oklch(0.76 0.18 162);
   --chart-2: oklch(0.75 0.15 200);
   --chart-3: oklch(0.7 0.17 340);
   --chart-4: oklch(0.65 0.16 40);
   --chart-5: oklch(0.55 0.14 120);
   
-  --sidebar: oklch(0.13 0.035 285);
-  --sidebar-foreground: oklch(0.9 0.02 285);
-  --sidebar-primary: oklch(0.68 0.19 281);
-  --sidebar-primary-foreground: oklch(0.1 0.03 281);
-  --sidebar-accent: oklch(0.22 0.05 285);
-  --sidebar-accent-foreground: oklch(0.92 0.02 285);
-  --sidebar-border: oklch(0.22 0.05 285);
-  --sidebar-ring: oklch(0.68 0.19 281);
+  --sidebar: oklch(0.08 0.02 165);
+  --sidebar-foreground: oklch(0.9 0.02 165);
+  --sidebar-primary: oklch(0.76 0.18 162);
+  --sidebar-primary-foreground: oklch(0.08 0.04 162);
+  --sidebar-accent: oklch(0.14 0.03 165);
+  --sidebar-accent-foreground: oklch(0.92 0.02 165);
+  --sidebar-border: oklch(0.14 0.03 165);
+  --sidebar-ring: oklch(0.76 0.18 162);
 }
 
 @layer base {
@@ -153,36 +153,36 @@
     font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
     background-color: var(--background);
     background-image: 
-      /* Financial chart grid lines (indigo/green chart matrix) */
-      linear-gradient(to right, rgba(99, 102, 241, 0.12) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(99, 102, 241, 0.12) 1px, transparent 1px),
-      linear-gradient(to right, rgba(16, 185, 129, 0.09) 2px, transparent 2px),
-      linear-gradient(to bottom, rgba(16, 185, 129, 0.09) 2px, transparent 2px),
+      /* Financial chart grid lines (teal/green chart matrix) */
+      linear-gradient(to right, rgba(16, 185, 129, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(16, 185, 129, 0.06) 1px, transparent 1px),
+      linear-gradient(to right, rgba(16, 185, 129, 0.04) 2px, transparent 2px),
+      linear-gradient(to bottom, rgba(16, 185, 129, 0.04) 2px, transparent 2px),
       /* Glowing green (bull) and blue (indices) indicators */
-      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.09) 0px, transparent 55%),
-      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 55%),
-      radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.04) 0px, transparent 55%),
-      radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.07) 0px, transparent 55%);
+      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.06) 0px, transparent 55%),
+      radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.02) 0px, transparent 55%),
+      radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 55%);
     background-size: 40px 40px, 40px 40px, 200px 200px, 200px 200px, 200% 200%, 200% 200%, 200% 200%, 200% 200%;
     background-attachment: fixed;
-    animation: gradientShift 20s ease infinite alternate;
+    animation: gradientShift 60s ease infinite alternate;
   }
   .dark body {
     background-color: var(--background);
     background-image: 
-      /* Dark mode financial chart grid lines */
-      linear-gradient(to right, rgba(168, 85, 247, 0.22) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(168, 85, 247, 0.22) 1px, transparent 1px),
-      linear-gradient(to right, rgba(16, 185, 129, 0.16) 2px, transparent 2px),
-      linear-gradient(to bottom, rgba(16, 185, 129, 0.16) 2px, transparent 2px),
+      /* Dark mode financial chart grid lines (premium teal) */
+      linear-gradient(to right, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+      linear-gradient(to right, rgba(0, 223, 162, 0.05) 2px, transparent 2px),
+      linear-gradient(to bottom, rgba(0, 223, 162, 0.05) 2px, transparent 2px),
       /* Glowing green & blue index colors */
-      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.16) 0px, transparent 55%),
-      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 55%),
-      radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.06) 0px, transparent 55%),
-      radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.14) 0px, transparent 55%);
+      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 55%),
+      radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.03) 0px, transparent 55%),
+      radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 55%);
     background-size: 40px 40px, 40px 40px, 200px 200px, 200px 200px, 200% 200%, 200% 200%, 200% 200%, 200% 200%;
     background-attachment: fixed;
-    animation: gradientShift 20s ease infinite alternate;
+    animation: gradientShift 60s ease infinite alternate;
   }
   html {
     @apply font-sans;
@@ -228,14 +228,14 @@ main, .flex-1 {
 div[data-slot="card"] {
   background: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(139, 92, 246, 0.12) !important;
-  box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(16, 185, 129, 0.12) !important;
+  box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .dark div[data-slot="card"] {
-  background: rgba(18, 14, 30, 0.65) !important;
+  background: rgba(8, 12, 13, 0.65) !important;
   backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(167, 139, 250, 0.12) !important;
+  border: 1px solid rgba(16, 185, 129, 0.15) !important;
   box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -243,24 +243,24 @@ div[data-slot="card"] {
 div[data-slot="card"]:hover {
   transform: translateY(-4px) scale(1.005) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
 }
 .dark div[data-slot="card"]:hover {
   transform: translateY(-4px) scale(1.005) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 20px 40px -15px rgba(167, 139, 250, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 223, 162, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Sidebar Styling: Translucent Glassmorphism with High Contrast */
 [data-sidebar="sidebar"], .bg-sidebar {
   background: rgba(255, 255, 255, 0.85) !important;
   backdrop-filter: blur(28px) !important;
-  border-right: 1px solid rgba(139, 92, 246, 0.1) !important;
+  border-right: 1px solid rgba(16, 185, 129, 0.1) !important;
 }
 .dark [data-sidebar="sidebar"], .dark .bg-sidebar {
-  background: rgba(12, 10, 20, 0.85) !important;
+  background: rgba(8, 12, 13, 0.85) !important;
   backdrop-filter: blur(28px) !important;
-  border-right: 1px solid rgba(167, 139, 250, 0.1) !important;
+  border-right: 1px solid rgba(16, 185, 129, 0.1) !important;
 }
 
 /* Sleek capsule sidebar buttons */
@@ -275,11 +275,11 @@ div[data-slot="card"]:hover {
 
 [data-sidebar="menu-button"]:hover {
   transform: translateX(6px) scale(1.02) !important;
-  background: rgba(139, 92, 246, 0.08) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
   color: var(--primary) !important;
 }
 .dark [data-sidebar="menu-button"]:hover {
-  background: rgba(167, 139, 250, 0.1) !important;
+  background: rgba(16, 185, 129, 0.1) !important;
 }
 
 /* Active Sidebar Item Styling with Dynamic Theme Shadow & Left indicator bar */
@@ -328,33 +328,33 @@ div[data-slot="card"]:hover {
   color: oklch(0.78 0.01 285) !important; /* light gray in dark mode */
 }
 
-/* Floating Ambient Orbs animations */
+/* Floating Ambient Orbs animations (slowed down to not be distracting) */
 .ambient-orb-1 {
-  animation: floatOrb1 20s ease-in-out infinite alternate;
+  animation: floatOrb1 55s ease-in-out infinite alternate;
 }
 .ambient-orb-2 {
-  animation: floatOrb2 25s ease-in-out infinite alternate;
+  animation: floatOrb2 70s ease-in-out infinite alternate;
 }
 .ambient-orb-3 {
-  animation: floatOrb3 30s ease-in-out infinite alternate;
+  animation: floatOrb3 90s ease-in-out infinite alternate;
 }
 
 @keyframes floatOrb1 {
   0% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(80px, -100px) scale(1.2); }
-  100% { transform: translate(-40px, 40px) scale(0.9); }
+  50% { transform: translate(60px, -70px) scale(1.1); }
+  100% { transform: translate(-30px, 30px) scale(0.95); }
 }
 
 @keyframes floatOrb2 {
   0% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(-100px, 80px) scale(1.15); }
-  100% { transform: translate(50px, -50px) scale(0.95); }
+  50% { transform: translate(-70px, 60px) scale(1.1); }
+  100% { transform: translate(40px, -40px) scale(0.97); }
 }
 
 @keyframes floatOrb3 {
   0% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(50px, 100px) scale(1.08); }
-  100% { transform: translate(-80px, -60px) scale(0.9); }
+  50% { transform: translate(40px, 70px) scale(1.05); }
+  100% { transform: translate(-60px, -45px) scale(0.95); }
 }
 
 /* Sleek interactive micro-animations for elements */

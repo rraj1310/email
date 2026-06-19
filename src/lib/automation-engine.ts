@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { sendMail } from "@/lib/email"
+import { sendMail, personalizeHtml } from "@/lib/email"
 
 export async function enrollContactInWorkflow(contactId: string, automationRuleId: string, organizationId: string) {
   // Check if contact is already enrolled
@@ -183,16 +183,31 @@ export async function executeWorkflowJourney(
           })
 
           if (campaign && contact) {
-            let html = campaign.htmlContent || ""
-            html = html.replace(/\{\{\s*firstName\s*\}\}/g, contact.firstName || "")
-            html = html.replace(/\{\{\s*lastName\s*\}\}/g, contact.lastName || "")
-            html = html.replace(/\{\{\s*email\s*\}\}/g, contact.email)
+            const html = personalizeHtml(campaign.htmlContent || "", contact)
+
+            let emailAttachments: Array<{ filename: string; path: string }> = []
+            if (campaign.designContent) {
+              try {
+                const design = typeof campaign.designContent === "string"
+                  ? JSON.parse(campaign.designContent)
+                  : campaign.designContent
+                if (design && design.promoAttachmentUrl) {
+                  emailAttachments.push({
+                    filename: design.promoAttachmentName || "attachment",
+                    path: design.promoAttachmentUrl,
+                  })
+                }
+              } catch (err) {
+                console.error("Failed to parse campaign attachments:", err)
+              }
+            }
 
             try {
               await sendMail({
                 to: contact.email,
                 subject: campaign.subject || "Automation Campaign",
                 html,
+                attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
               })
 
               await db.automationLog.create({

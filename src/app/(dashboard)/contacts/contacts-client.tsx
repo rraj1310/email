@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Sheet,
   SheetContent,
@@ -40,7 +41,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Plus, Search, Filter, Download, Upload, User, Trash2, Mail, ExternalLink, Sparkles, Check, X } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Filter, Download, Upload, User, Users, Trash2, Mail, ExternalLink, Sparkles, Check, X } from "lucide-react"
 import { Contact, Tag } from "@prisma/client"
 import { createContact, deleteContact, getTags } from "@/app/actions/contacts"
 import { generateSegmentRules } from "@/app/actions/copilot"
@@ -96,6 +97,16 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
     }
     loadTags()
   }, [])
+
+  const tagCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {}
+    contacts.forEach(c => {
+      c.tags.forEach(t => {
+        counts[t.name] = (counts[t.name] || 0) + 1
+      })
+    })
+    return counts
+  }, [contacts])
 
   // Filter contacts by query + advanced segments
   const filteredContacts = React.useMemo(() => {
@@ -493,6 +504,71 @@ export function ContactsClient({ initialContacts }: ContactsClientProps) {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      {/* Stats Cards Section */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 animate-stagger-1">
+        {/* Total Contacts Box */}
+        <Card className="relative overflow-hidden border bg-gradient-to-br from-emerald-500/5 to-card">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-teal-500" />
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Contacts</p>
+              <h3 className="text-2xl font-bold tracking-tight mt-1">{contacts.length}</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">All time registered subscribers</p>
+            </div>
+            <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg">
+              <Users className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Filtered Contacts Box */}
+        <Card className="relative overflow-hidden border bg-gradient-to-br from-blue-500/5 to-card">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-blue-500 to-teal-500" />
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filtered List</p>
+              <h3 className="text-2xl font-bold tracking-tight mt-1">{filteredContacts.length}</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {filteredContacts.length === contacts.length 
+                  ? "Showing all contacts" 
+                  : `Matching active filters`
+                }
+              </p>
+            </div>
+            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
+              <Filter className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tags Count Box */}
+        <Card className="relative overflow-hidden border bg-gradient-to-br from-indigo-500/5 to-card col-span-1 sm:col-span-2 lg:col-span-1">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-indigo-500 to-purple-500" />
+          <CardContent className="p-4 flex flex-col justify-between h-full min-h-[88px]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tags Breakdown</span>
+              <Badge variant="outline" className="text-[9px] font-bold text-indigo-500 bg-indigo-500/5">{Object.keys(tagCounts).length} active</Badge>
+            </div>
+            <div className="flex flex-wrap gap-1.5 max-h-[50px] overflow-y-auto scrollbar-none pr-1">
+              {Object.keys(tagCounts).length > 0 ? (
+                Object.entries(tagCounts).map(([tagName, count]) => (
+                  <Badge 
+                    key={tagName} 
+                    variant="secondary" 
+                    className="text-[9px] px-1.5 py-0.5 flex items-center gap-1 font-medium bg-muted/60 dark:bg-slate-900 border"
+                  >
+                    <span className="text-muted-foreground">#{tagName}:</span>
+                    <span className="font-bold text-foreground">{count}</span>
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-muted-foreground text-[10px]">No tags assigned to contacts yet.</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search and Filters Drawer Trigger */}

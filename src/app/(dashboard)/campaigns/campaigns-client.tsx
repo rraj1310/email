@@ -23,11 +23,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Search, MoreHorizontal, FileEdit, Send, Copy, Pause, Play, Trash2, BarChart, Sparkles, Eye } from "lucide-react"
+import { Plus, Search, MoreHorizontal, FileEdit, Send, Copy, Pause, Play, Trash2, BarChart, Sparkles, Eye, Settings, Upload, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Campaign, Contact } from "@prisma/client"
-import { createCampaign, deleteCampaign, cloneCampaign, toggleCampaignStatus, sendTestCampaign, dispatchCampaignAction } from "@/app/actions/campaigns"
+import { createCampaign, deleteCampaign, cloneCampaign, toggleCampaignStatus, sendTestCampaign, dispatchCampaignAction, saveCampaignTemplateSettings } from "@/app/actions/campaigns"
 import { toast } from "sonner"
 
 interface CampaignsClientProps {
@@ -47,6 +47,17 @@ export function CampaignsClient({ initialCampaigns, initialContacts = [] }: Camp
   const [selectedContactIds, setSelectedContactIds] = React.useState<string[]>([])
   const [contactSearch, setContactSearch] = React.useState("")
   const [isSaving, setIsSaving] = React.useState(false)
+
+  // Edit Template Settings states
+  const [isEditSettingsOpen, setIsEditSettingsOpen] = React.useState(false)
+  const [editCampaignId, setEditCampaignId] = React.useState<string | null>(null)
+  const [editSubject, setEditSubject] = React.useState("")
+  const [editPreviewText, setEditPreviewText] = React.useState("")
+  const [editBannerUrl, setEditBannerUrl] = React.useState("")
+  const [editPromoAttachmentUrl, setEditPromoAttachmentUrl] = React.useState("")
+  const [editPromoAttachmentName, setEditPromoAttachmentName] = React.useState("")
+  const [isUploadingBanner, setIsUploadingBanner] = React.useState(false)
+  const [isUploadingAttachment, setIsUploadingAttachment] = React.useState(false)
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -213,6 +224,81 @@ export function CampaignsClient({ initialCampaigns, initialContacts = [] }: Camp
       toast.error("Failed to send campaign.")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editCampaignId) return
+
+    setIsSaving(true)
+    try {
+      const res = await saveCampaignTemplateSettings(
+        editCampaignId,
+        editSubject,
+        editPreviewText,
+        editBannerUrl || null,
+        editPromoAttachmentUrl || null,
+        editPromoAttachmentName || null
+      )
+      if (res.success && "data" in res) {
+        toast.success("Campaign settings updated!")
+        setCampaigns(campaigns.map(c => c.id === editCampaignId ? res.data as Campaign : c))
+        setIsEditSettingsOpen(false)
+        router.refresh()
+      } else {
+        toast.error(("error" in res ? res.error : null) || "Failed to update campaign settings.")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to update campaign settings.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingBanner(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/media/upload", { method: "POST", body: formData })
+      const data = await res.json()
+      if (data.success && data.url) {
+        setEditBannerUrl(data.url)
+        toast.success("Banner cover uploaded!")
+      } else {
+        toast.error(data.error || "Upload failed")
+      }
+    } catch {
+      toast.error("Banner upload failed.")
+    } finally {
+      setIsUploadingBanner(false)
+    }
+  }
+
+  const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingAttachment(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/media/upload", { method: "POST", body: formData })
+      const data = await res.json()
+      if (data.success && data.url) {
+        setEditPromoAttachmentUrl(data.url)
+        setEditPromoAttachmentName(file.name)
+        toast.success("Attachment file uploaded!")
+      } else {
+        toast.error(data.error || "Upload failed")
+      }
+    } catch {
+      toast.error("Attachment upload failed.")
+    } finally {
+      setIsUploadingAttachment(false)
     }
   }
 
@@ -394,6 +480,24 @@ export function CampaignsClient({ initialCampaigns, initialContacts = [] }: Camp
                           setIsSendTestOpen(true)
                         }} className="text-xs">
                           <Send className="mr-1.5 h-3.5 w-3.5 text-blue-500" /> Send / Dispatch Campaign
+                        </DropdownMenuItem>
+
+                        {/* Edit Campaign Details */}
+                        <DropdownMenuItem onClick={async () => {
+                          const design = campaign.designContent
+                            ? (typeof campaign.designContent === "string"
+                                ? JSON.parse(campaign.designContent)
+                                : campaign.designContent)
+                            : {}
+                          setEditCampaignId(campaign.id)
+                          setEditSubject(campaign.subject || "")
+                          setEditPreviewText(campaign.previewText || "")
+                          setEditBannerUrl(design.bannerUrl || "")
+                          setEditPromoAttachmentUrl(design.promoAttachmentUrl || "")
+                          setEditPromoAttachmentName(design.promoAttachmentName || "")
+                          setIsEditSettingsOpen(true)
+                        }} className="text-xs">
+                          <Settings className="mr-1.5 h-3.5 w-3.5" /> Edit Campaign Details
                         </DropdownMenuItem>
 
                         {/* Toggle states */}
@@ -683,6 +787,101 @@ export function CampaignsClient({ initialCampaigns, initialContacts = [] }: Camp
               </Link>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Campaign Settings Dialog Modal */}
+      <Dialog open={isEditSettingsOpen} onOpenChange={setIsEditSettingsOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <form onSubmit={handleSaveSettings}>
+            <DialogHeader className="pb-3 border-b mb-4">
+              <DialogTitle className="text-lg font-bold flex items-center gap-1.5">
+                <Settings className="h-5 w-5 text-emerald-500" />
+                Edit Campaign Details
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Update the campaign settings, cover banner image, and select optional attachments.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="editSubject" className="text-xs font-semibold">Email Subject Line *</Label>
+                <Input
+                  id="editSubject"
+                  placeholder="Subject line..."
+                  value={editSubject}
+                  onChange={(e) => setEditSubject(e.target.value)}
+                  required
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="editPreviewText" className="text-xs font-semibold">Preview Text</Label>
+                <Input
+                  id="editPreviewText"
+                  placeholder="Preview text in inbox..."
+                  value={editPreviewText}
+                  onChange={(e) => setEditPreviewText(e.target.value)}
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-semibold">Cover Banner Image</Label>
+                  <div className="relative h-9 border border-dashed rounded-md flex items-center justify-center text-[11px] text-muted-foreground cursor-pointer hover:bg-muted/30 overflow-hidden">
+                    <input type="file" accept="image/*" onChange={handleBannerUpload} disabled={isUploadingBanner} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    {isUploadingBanner ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Uploading...</> : editBannerUrl ? "✅ Cover Uploaded" : <><Upload className="h-3.5 w-3.5 mr-1" />Upload Cover</>}
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-semibold">Optional File Attachment</Label>
+                  <div className="relative h-9 border border-dashed rounded-md flex items-center justify-center text-[11px] text-muted-foreground cursor-pointer hover:bg-muted/30 overflow-hidden">
+                    <input type="file" onChange={handleAttachmentUpload} disabled={isUploadingAttachment} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    {isUploadingAttachment ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Uploading...</> : editPromoAttachmentUrl ? "✅ File Attached" : <><Upload className="h-3.5 w-3.5 mr-1" />Attach File</>}
+                  </div>
+                </div>
+              </div>
+
+              {(editBannerUrl || editPromoAttachmentUrl) && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    {editBannerUrl && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setEditBannerUrl("")} className="w-full h-8 text-[10px] text-destructive hover:bg-destructive/10 cursor-pointer">
+                        Remove Cover Banner
+                      </Button>
+                    )}
+                  </div>
+                  <div>
+                    {editPromoAttachmentUrl && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => { setEditPromoAttachmentUrl(""); setEditPromoAttachmentName(""); }} className="w-full h-8 text-[10px] text-destructive hover:bg-destructive/10 cursor-pointer">
+                        Remove Attachment
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {editPromoAttachmentUrl && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] rounded-md px-3 py-2 flex items-center justify-between font-semibold">
+                  <span className="truncate max-w-[320px]">📎 Attached: {editPromoAttachmentName}</span>
+                  <button type="button" onClick={() => { setEditPromoAttachmentUrl(""); setEditPromoAttachmentName(""); }} className="text-destructive hover:underline cursor-pointer">Remove</button>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="mt-6 pt-4 border-t">
+              <Button variant="outline" type="button" onClick={() => setIsEditSettingsOpen(false)} disabled={isSaving} className="text-xs h-9">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving} className="text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+                {isSaving ? "Saving..." : "Save Settings"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

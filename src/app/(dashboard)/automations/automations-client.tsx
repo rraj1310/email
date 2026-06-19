@@ -34,6 +34,8 @@ interface AutomationsClientProps {
       subject: string
       bodyText: string
       bannerUrl: string
+      promoAttachmentUrl?: string
+      promoAttachmentName?: string
     }
   }
   campaigns: any[]
@@ -63,6 +65,9 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
   const [isUploadingBanner, setIsUploadingBanner] = React.useState(false)
   const [isSavingConfig, setIsSavingConfig] = React.useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false)
+  const [bdayPromoAttachmentUrl, setBdayPromoAttachmentUrl] = React.useState(birthdaySettings.templateConfig?.promoAttachmentUrl || "")
+  const [bdayPromoAttachmentName, setBdayPromoAttachmentName] = React.useState(birthdaySettings.templateConfig?.promoAttachmentName || "")
+  const [isUploadingBdayAttachment, setIsUploadingBdayAttachment] = React.useState(false)
 
   // Sync workflows from props when they update (e.g. after router.refresh())
   React.useEffect(() => {
@@ -77,13 +82,23 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     setBdaySubject(birthdaySettings.templateConfig?.subject || "Happy Birthday! 🎂")
     setBdayBody(birthdaySettings.templateConfig?.bodyText || "Wishing you a wonderful year ahead filled with happiness and success!")
     setBdayBannerUrl(birthdaySettings.templateConfig?.bannerUrl || "")
+    setBdayPromoAttachmentUrl(birthdaySettings.templateConfig?.promoAttachmentUrl || "")
+    setBdayPromoAttachmentName(birthdaySettings.templateConfig?.promoAttachmentName || "")
   }, [birthdaySettings])
 
   const handleToggleBday = async (checked: boolean) => {
     setIsUpdatingBday(true)
     try {
       setBdayEnabled(checked)
-      const res = await saveSimpleBirthdayMessage(bdaySubject, bdayBody, bdayBannerUrl || null, checked, bdayTime)
+      const res = await saveSimpleBirthdayMessage(
+        bdaySubject, 
+        bdayBody, 
+        bdayBannerUrl || null, 
+        checked, 
+        bdayTime,
+        bdayPromoAttachmentUrl || null,
+        bdayPromoAttachmentName || null
+      )
       if ("data" in res && res.data) {
         toast.success(`Birthday emails ${checked ? "activated" : "paused"}.`)
         const updated = res.data
@@ -110,7 +125,15 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     }
     setIsSavingConfig(true)
     try {
-      const res = await saveSimpleBirthdayMessage(bdaySubject, bdayBody, bdayBannerUrl || null, bdayEnabled, bdayTime)
+      const res = await saveSimpleBirthdayMessage(
+        bdaySubject, 
+        bdayBody, 
+        bdayBannerUrl || null, 
+        bdayEnabled, 
+        bdayTime,
+        bdayPromoAttachmentUrl || null,
+        bdayPromoAttachmentName || null
+      )
       if ("data" in res && res.data) {
         toast.success("Birthday Settings & Template updated successfully!")
         const updatedRule = res.data
@@ -125,6 +148,41 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
     } finally {
       setIsSavingConfig(false)
     }
+  }
+
+  const handleBdayAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingBdayAttachment(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await fetch("/api/media/upload", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (data.success && data.url) {
+        setBdayPromoAttachmentUrl(data.url)
+        setBdayPromoAttachmentName(file.name)
+        toast.success("Attachment file uploaded successfully!")
+      } else {
+        toast.error(data.error || "Upload failed")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Attachment upload failed.")
+    } finally {
+      setIsUploadingBdayAttachment(false)
+    }
+  }
+
+  const handleRemoveBdayAttachment = () => {
+    setBdayPromoAttachmentUrl("")
+    setBdayPromoAttachmentName("")
+    toast.success("Attachment removed.")
   }
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -351,6 +409,38 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-1">
+                <Label className="text-xs font-semibold">Promotion Attachment (Optional)</Label>
+                <div className="relative h-8 border border-dashed rounded-md flex items-center justify-center text-[10px] text-muted-foreground cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/20 overflow-hidden">
+                  <input type="file" onChange={handleBdayAttachmentUpload} disabled={isUploadingBdayAttachment} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  {isUploadingBdayAttachment ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />Uploading...</> : bdayPromoAttachmentUrl ? "✅ Attached" : <><Upload className="h-3 w-3 mr-1" />Upload File</>}
+                </div>
+              </div>
+              {bdayBannerUrl && (
+                <div className="grid gap-1">
+                  <Label className="text-xs font-semibold">Banner Actions</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleRemoveBanner} className="h-8 text-[10px] text-destructive hover:bg-destructive/10 cursor-pointer">
+                    Remove Banner
+                  </Button>
+                </div>
+              )}
+              {bdayPromoAttachmentUrl && !bdayBannerUrl && (
+                <div className="grid gap-1">
+                  <Label className="text-xs font-semibold">Attachment Actions</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleRemoveBdayAttachment} className="h-8 text-[10px] text-destructive hover:bg-destructive/10 cursor-pointer">
+                    Remove File
+                  </Button>
+                </div>
+              )}
+              {bdayPromoAttachmentUrl && bdayBannerUrl && (
+                <div className="col-span-2 flex items-center justify-between text-[10px] text-emerald-600 bg-emerald-500/10 px-2.5 py-1.5 rounded-md mt-1 font-semibold">
+                  <span className="truncate max-w-[200px]">Attached: {bdayPromoAttachmentName}</span>
+                  <button type="button" onClick={handleRemoveBdayAttachment} className="text-destructive font-bold hover:underline cursor-pointer">Remove</button>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2 pt-1">
               <Button type="button" onClick={handleSaveSimpleConfig} disabled={isSavingConfig} className="flex-1 h-8 text-xs bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-semibold cursor-pointer">
                 {isSavingConfig ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" />Saving...</> : <><CheckCircle className="mr-1 h-3 w-3" />Save Settings</>}
@@ -431,18 +521,29 @@ export function AutomationsClient({ initialAutomations, birthdaySettings, campai
             <div className="flex gap-2"><span className="text-muted-foreground w-14 text-right">Subject:</span><span className="font-bold text-primary">{bdaySubject || "Happy Birthday!"}</span></div>
             <div className="flex gap-2"><span className="text-muted-foreground w-14 text-right">To:</span><span>John Doe &lt;john.doe@client.com&gt;</span></div>
           </div>
-          <div className="p-4 bg-slate-100 dark:bg-slate-950 max-h-[320px] overflow-y-auto flex justify-center">
-            <div className="w-full max-w-[420px] bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow text-xs">
-              {bdayBannerUrl ? (
-                <img src={bdayBannerUrl} alt="Banner" className="w-full h-32 object-cover" />
-              ) : (
-                <div className="h-20 bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center text-white text-2xl">🎂</div>
-              )}
-              <div className="p-5 space-y-3 font-sans leading-relaxed">
-                <h2 className="text-sm font-extrabold text-center">Happy Birthday!</h2>
-                <div className="text-slate-700 dark:text-slate-300 whitespace-pre-line" dangerouslySetInnerHTML={{ __html: (bdayBody || "Wishing you a wonderful year ahead!").replace(/\{\{firstName\}\}/g, "John").replace(/\{\{lastName\}\}/g, "Doe").replace(/\{\{email\}\}/g, "john.doe@client.com") }} />
+          <div className="p-4 bg-slate-100 dark:bg-slate-950 max-h-[360px] overflow-y-auto flex justify-center">
+            <div 
+              className="w-full max-w-[420px] rounded-xl overflow-hidden shadow text-xs border"
+              style={{
+                background: bdayBannerUrl 
+                  ? `url('${bdayBannerUrl}') no-repeat center/cover` 
+                  : 'linear-gradient(135deg, #08120d 0%, #0f3026 100%)',
+                minHeight: '260px',
+                padding: '20px 15px'
+              }}
+            >
+              <div className="bg-slate-950/90 text-white border border-emerald-500/20 rounded-lg p-5 text-center my-4 space-y-3">
+                <div className="text-2xl">🎉</div>
+                <h2 className="text-sm font-extrabold text-emerald-400">{bdaySubject || "Happy Birthday!"}</h2>
+                <div className="text-slate-200 whitespace-pre-line text-[11px] leading-relaxed" dangerouslySetInnerHTML={{ __html: (bdayBody || "Wishing you a wonderful year ahead!").replace(/\{\{firstName\}\}/g, "John").replace(/\{\{lastName\}\}/g, "Doe").replace(/\{\{email\}\}/g, "john.doe@client.com") }} />
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border-t text-[9px] text-center text-slate-400">© {new Date().getFullYear()} Your Workspace</div>
+              <div className="p-3 text-[9px] text-center text-slate-500 bg-slate-950/95 rounded-md border border-emerald-500/10">© {new Date().getFullYear()} Workspace Automations</div>
+              {bdayPromoAttachmentUrl && (
+                <div className="mt-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] rounded-md px-3 py-1.5 flex items-center justify-between">
+                  <span className="truncate max-w-[220px]">📎 {bdayPromoAttachmentName || "Promo Attachment"}</span>
+                  <span className="text-[8px] font-bold text-emerald-500/70">ATTACHED</span>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="p-3 border-t bg-muted/10">
@@ -482,6 +583,9 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
   const [isSaving, setIsSaving] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false)
+  const [promoAttachmentUrl, setPromoAttachmentUrl] = React.useState(item.templateConfig?.promoAttachmentUrl || "")
+  const [promoAttachmentName, setPromoAttachmentName] = React.useState(item.templateConfig?.promoAttachmentName || "")
+  const [isUploadingAttachment, setIsUploadingAttachment] = React.useState(false)
 
   const hasTemplate = !!item.templateConfig
 
@@ -492,6 +596,8 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
     setEnabled(item.isActive)
     setSendDate(item.triggerConfig?.sendDate || "")
     setSendTime(item.triggerConfig?.sendTime || "09:00")
+    setPromoAttachmentUrl(item.templateConfig?.promoAttachmentUrl || "")
+    setPromoAttachmentName(item.templateConfig?.promoAttachmentName || "")
   }, [item])
 
   const handleSave = async () => {
@@ -502,7 +608,17 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
     setIsSaving(true)
     try {
       const { saveAutomationTemplate } = await import("@/app/actions/automations")
-      const res = await saveAutomationTemplate(item.id, subject, body, bannerUrl || null, enabled, sendDate || null, sendTime || null)
+      const res = await saveAutomationTemplate(
+        item.id, 
+        subject, 
+        body, 
+        bannerUrl || null, 
+        enabled, 
+        sendDate || null, 
+        sendTime || null,
+        promoAttachmentUrl || null,
+        promoAttachmentName || null
+      )
       if ("data" in res && res.data) {
         toast.success("Automation template saved!")
         onUpdated(res.data)
@@ -538,13 +654,57 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
     }
   }
 
+  const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingAttachment(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/media/upload", { method: "POST", body: formData })
+      const data = await res.json()
+      if (data.success && data.url) {
+        setPromoAttachmentUrl(data.url)
+        setPromoAttachmentName(file.name)
+        toast.success("Attachment uploaded!")
+      } else {
+        toast.error(data.error || "Upload failed")
+      }
+    } catch {
+      toast.error("Attachment upload failed.")
+    } finally {
+      setIsUploadingAttachment(false)
+    }
+  }
+
+  const handleRemoveAttachment = () => {
+    setPromoAttachmentUrl("")
+    setPromoAttachmentName("")
+    toast.success("Attachment removed.")
+  }
+
+  const handleRemoveBanner = () => {
+    setBannerUrl("")
+    toast.success("Banner removed.")
+  }
+
   const handleToggleEnabled = async (checked: boolean) => {
     setEnabled(checked)
     if (hasTemplate) {
       setIsSaving(true)
       try {
         const { saveAutomationTemplate } = await import("@/app/actions/automations")
-        const res = await saveAutomationTemplate(item.id, subject, body, bannerUrl || null, checked, sendDate || null, sendTime || null)
+        const res = await saveAutomationTemplate(
+          item.id, 
+          subject, 
+          body, 
+          bannerUrl || null, 
+          checked, 
+          sendDate || null, 
+          sendTime || null,
+          promoAttachmentUrl || null,
+          promoAttachmentName || null
+        )
         if ("data" in res && res.data) {
           toast.success(`Automation ${checked ? "activated" : "paused"}.`)
           onUpdated(res.data)
@@ -560,6 +720,7 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
       onToggle(item.id)
     }
   }
+
 
   // No linked template — show simple compact row with fallback controls
   if (!hasTemplate) {
@@ -644,13 +805,43 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
               </div>
             </div>
             <div className="grid gap-1">
-              <Label className="text-xs font-semibold">Advanced</Label>
-              <Link href={`/automations/${item.id}/editor`}>
-                <Button variant="outline" className="h-8 w-full text-[10px] border-muted cursor-pointer">
-                  <Settings className="h-3 w-3 mr-1" /> Flow Editor
-                </Button>
-              </Link>
+              <Label className="text-xs font-semibold">Promotion Attachment (Optional)</Label>
+              <div className="relative h-8 border border-dashed rounded-md flex items-center justify-center text-[10px] text-muted-foreground cursor-pointer hover:bg-muted/30 overflow-hidden">
+                <input type="file" onChange={handleAttachmentUpload} disabled={isUploadingAttachment} className="absolute inset-0 opacity-0 cursor-pointer" />
+                {isUploadingAttachment ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />Uploading...</> : promoAttachmentUrl ? "✅ Attached" : <><Upload className="h-3 w-3 mr-1" />Upload File</>}
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1">
+              <Label className="text-xs font-semibold">Banner Actions</Label>
+              <Button type="button" variant="outline" size="sm" onClick={handleRemoveBanner} disabled={!bannerUrl} className="h-8 text-[10px] text-destructive hover:bg-destructive/10 disabled:opacity-50 cursor-pointer">
+                Remove Banner
+              </Button>
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-xs font-semibold">Attachment Actions</Label>
+              <Button type="button" variant="outline" size="sm" onClick={handleRemoveAttachment} disabled={!promoAttachmentUrl} className="h-8 text-[10px] text-destructive hover:bg-destructive/10 disabled:opacity-50 cursor-pointer">
+                Remove File
+              </Button>
+            </div>
+          </div>
+
+          {promoAttachmentUrl && (
+            <div className="flex items-center justify-between text-[10px] text-emerald-600 bg-emerald-500/10 px-2.5 py-1.5 rounded-md mt-1 font-semibold">
+              <span className="truncate max-w-[280px]">Attached: {promoAttachmentName}</span>
+              <button type="button" onClick={handleRemoveAttachment} className="text-destructive font-bold hover:underline cursor-pointer">Remove</button>
+            </div>
+          )}
+
+          <div className="grid gap-1">
+            <Label className="text-xs font-semibold">Advanced Designer</Label>
+            <Link href={`/automations/${item.id}/editor`}>
+              <Button variant="outline" className="h-8 w-full text-[10px] border-muted cursor-pointer">
+                <Settings className="h-3 w-3 mr-1" /> Drag & Drop Flow Editor
+              </Button>
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-0.5">
@@ -686,18 +877,29 @@ function AutomationCard({ item, onToggle, onDelete, onUpdated }: {
             <div className="flex gap-2"><span className="text-muted-foreground w-14 text-right">Subject:</span><span className="font-bold text-primary">{subject || "No subject"}</span></div>
             <div className="flex gap-2"><span className="text-muted-foreground w-14 text-right">To:</span><span>John Doe &lt;john.doe@client.com&gt;</span></div>
           </div>
-          <div className="p-4 bg-slate-100 dark:bg-slate-950 max-h-[320px] overflow-y-auto flex justify-center">
-            <div className="w-full max-w-[420px] bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow text-xs">
-              {bannerUrl ? (
-                <img src={bannerUrl} alt="Banner" className="w-full h-32 object-cover" />
-              ) : (
-                <div className="h-20 bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white text-2xl">{cfg.emoji}</div>
-              )}
-              <div className="p-5 space-y-3 font-sans leading-relaxed">
-                <h2 className="text-sm font-extrabold text-center">{subject || "Email Subject"}</h2>
-                <div className="text-slate-700 dark:text-slate-300 whitespace-pre-line" dangerouslySetInnerHTML={{ __html: (body || "Your email message...").replace(/\{\{firstName\}\}/g, "John").replace(/\{\{lastName\}\}/g, "Doe").replace(/\{\{email\}\}/g, "john.doe@client.com") }} />
+          <div className="p-4 bg-slate-100 dark:bg-slate-950 max-h-[360px] overflow-y-auto flex justify-center">
+            <div 
+              className="w-full max-w-[420px] rounded-xl overflow-hidden shadow text-xs border"
+              style={{
+                background: bannerUrl 
+                  ? `url('${bannerUrl}') no-repeat center/cover` 
+                  : `linear-gradient(135deg, ${cfg.gradientFrom.includes('emerald') ? '#08120d' : '#030706'} 0%, ${cfg.gradientFrom.includes('emerald') ? '#0f3026' : '#1e1b4b'} 100%)`,
+                minHeight: '260px',
+                padding: '20px 15px'
+              }}
+            >
+              <div className="bg-slate-950/90 text-white border border-emerald-500/20 rounded-lg p-5 text-center my-4 space-y-3">
+                <div className="text-2xl">{cfg.emoji}</div>
+                <h2 className="text-sm font-extrabold text-emerald-400">{subject || "Template Subject"}</h2>
+                <div className="text-slate-200 whitespace-pre-line text-[11px] leading-relaxed" dangerouslySetInnerHTML={{ __html: (body || "Your email message...").replace(/\{\{firstName\}\}/g, "John").replace(/\{\{lastName\}\}/g, "Doe").replace(/\{\{email\}\}/g, "john.doe@client.com") }} />
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border-t text-[9px] text-center text-slate-400">© {new Date().getFullYear()} Your Workspace</div>
+              <div className="p-3 text-[9px] text-center text-slate-500 bg-slate-950/95 rounded-md border border-emerald-500/10">© {new Date().getFullYear()} Workspace Automations</div>
+              {promoAttachmentUrl && (
+                <div className="mt-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] rounded-md px-3 py-1.5 flex items-center justify-between">
+                  <span className="truncate max-w-[220px]">📎 {promoAttachmentName || "Promo Attachment"}</span>
+                  <span className="text-[8px] font-bold text-emerald-500/70">ATTACHED</span>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="p-3 border-t bg-muted/10">

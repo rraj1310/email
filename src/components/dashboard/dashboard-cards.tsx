@@ -120,11 +120,11 @@ export function DashboardCards({ initialEnabled, emailTime, todayBirthdays }: Da
       </Card>
 
       {/* CARD 4: Sleek AI Personalized Bulk Send */}
-      <Card className="relative overflow-hidden group border bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-card hover:shadow-lg transition-all duration-300 flex flex-col justify-between hover:scale-[1.01]">
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-indigo-500" />
+      <Card className="relative overflow-hidden group border bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-card hover:shadow-lg transition-all duration-300 flex flex-col justify-between hover:scale-[1.01]">
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-teal-500" />
         <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-tr from-violet-500 to-indigo-500 text-white rounded-lg shadow-sm">
+            <div className="p-1.5 bg-gradient-to-tr from-emerald-500 to-teal-500 text-slate-950 rounded-lg shadow-sm">
               <Sparkles className="h-4 w-4" />
             </div>
             <div>
@@ -138,17 +138,17 @@ export function DashboardCards({ initialEnabled, emailTime, todayBirthdays }: Da
           </div>
 
           <div className="flex items-center justify-between text-[9px] font-semibold text-muted-foreground/80 bg-muted/30 p-2 rounded-lg border border-border/40 select-none">
-            <span className="flex items-center gap-1"><span className="text-violet-500 font-bold">1.</span> Select</span>
+            <span className="flex items-center gap-1"><span className="text-emerald-500 font-bold">1.</span> Select</span>
             <span className="text-muted-foreground/30">➔</span>
-            <span className="flex items-center gap-1"><span className="text-violet-500 font-bold">2.</span> Context</span>
+            <span className="flex items-center gap-1"><span className="text-emerald-500 font-bold">2.</span> Context</span>
             <span className="text-muted-foreground/30">➔</span>
-            <span className="flex items-center gap-1"><span className="text-violet-500 font-bold">3.</span> AI Write</span>
+            <span className="flex items-center gap-1"><span className="text-emerald-500 font-bold">3.</span> AI Write</span>
             <span className="text-muted-foreground/30">➔</span>
-            <span className="flex items-center gap-1"><span className="text-violet-500 font-bold">4.</span> Send</span>
+            <span className="flex items-center gap-1"><span className="text-emerald-500 font-bold">4.</span> Send</span>
           </div>
 
           <Link href="/campaigns/personalized" passHref className="w-full">
-            <Button size="sm" className="w-full h-8 text-[10px] font-bold bg-white text-violet-900 border border-violet-200 hover:bg-violet-50 hover:text-violet-950 shadow-sm cursor-pointer">
+            <Button size="sm" className="w-full h-8 text-[10px] font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 hover:text-slate-900 border-none shadow-sm cursor-pointer">
               ✦ Start Personalized Send <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </Link>

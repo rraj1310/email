@@ -7,9 +7,10 @@ interface EmailOptions {
   from?: string
   provider?: "SMTP" | "SENDGRID" | "SES"
   providerApiKey?: string
+  attachments?: Array<{ filename: string; path: string }>
 }
 
-export async function sendMail({ to, subject, html, from, provider = "SMTP", providerApiKey }: EmailOptions) {
+export async function sendMail({ to, subject, html, from, provider = "SMTP", providerApiKey, attachments }: EmailOptions) {
   const defaultFrom = from || process.env.EMAIL_FROM || "no-reply@marketing.acme.com"
 
   // 1. SendGrid Provider via API
@@ -20,6 +21,25 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
     }
 
     console.log(`[SendGrid] Sending to: ${to} | Subject: ${subject} | From: ${defaultFrom}`)
+
+    let sendgridAttachments: any[] = []
+    if (attachments && attachments.length > 0) {
+      for (const att of attachments) {
+        try {
+          const res = await fetch(att.path)
+          const buffer = await res.arrayBuffer()
+          const base64Content = Buffer.from(buffer).toString("base64")
+          sendgridAttachments.push({
+            content: base64Content,
+            filename: att.filename,
+            type: res.headers.get("content-type") || "application/octet-stream",
+            disposition: "attachment",
+          })
+        } catch (err) {
+          console.error("Failed to fetch email attachment for SendGrid:", err)
+        }
+      }
+    }
 
     const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
@@ -32,6 +52,7 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
         from: { email: defaultFrom },
         subject,
         content: [{ type: "text/html", value: html }],
+        attachments: sendgridAttachments.length > 0 ? sendgridAttachments : undefined,
       }),
     })
 
@@ -74,6 +95,10 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
       to,
       subject,
       html,
+      attachments: attachments ? attachments.map(att => ({
+        filename: att.filename,
+        path: att.path,
+      })) : undefined,
     })
 
     console.log(`[SMTP] ✅ Sent successfully to ${to} | MessageID: ${info.messageId}`)
@@ -83,3 +108,21 @@ export async function sendMail({ to, subject, html, from, provider = "SMTP", pro
     throw new Error(`SMTP delivery failed: ${smtpError.message || "Unknown SMTP error"}`)
   }
 }
+
+// Case-insensitive dynamic template personalization helper
+export function personalizeHtml(
+  htmlContent: string, 
+  target: { email: string; firstName?: string | null; lastName?: string | null }
+) {
+  const email = target.email
+  const firstName = target.firstName || "Subscriber"
+  const lastName = target.lastName || ""
+  const fullName = [target.firstName, target.lastName].filter(Boolean).join(" ") || "Subscriber"
+
+  return htmlContent
+    .replace(/\{\{\s*name\s*\}\}/gi, fullName)
+    .replace(/\{\{\s*firstName\s*\}\}/gi, firstName)
+    .replace(/\{\{\s*lastName\s*\}\}/gi, lastName)
+    .replace(/\{\{\s*email\s*\}\}/gi, email)
+}
+

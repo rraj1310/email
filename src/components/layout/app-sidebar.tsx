@@ -239,65 +239,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors"
-                  />
-                }
-              >
-                <div className="bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-500 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-lg">
-                  <Building2 className="size-4 animate-pulse" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold text-foreground">
-                    {activeWorkspace?.name || orgName}
-                  </span>
-                  <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
-                    {activeWorkspace ? `Role: ${activeWorkspace.role}` : "Email Marketing"}
-                  </span>
-                </div>
-                <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                align="start"
-                side="bottom"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Workspaces</DropdownMenuLabel>
-                {workspaces.map((workspace) => (
-                  <DropdownMenuItem
-                    key={workspace.id}
-                    onClick={() => handleSwitch(workspace.id)}
-                    className="gap-2 p-2 focus:bg-sidebar-accent cursor-pointer"
-                  >
-                    <div className="flex size-6 items-center justify-center rounded-md border bg-background text-xs font-medium text-foreground">
-                      {workspace.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="font-medium text-sm">{workspace.name}</div>
-                      <div className="text-[10px] text-muted-foreground">Role: {workspace.role}</div>
-                    </div>
-                    {activeWorkspace?.id === workspace.id && (
-                      <Check className="ml-auto size-4 text-blue-500" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2 p-2 cursor-pointer focus:bg-sidebar-accent text-blue-600 dark:text-blue-400 font-medium"
-                  onClick={() => setIsCreateOpen(true)}
-                >
-                  <div className="flex size-6 items-center justify-center rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40">
-                    <Plus className="size-4" />
-                  </div>
-                  <div className="text-sm">Create Workspace</div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-3 p-2 select-none">
+              <div className="bg-gradient-to-tr from-emerald-500 to-teal-500 text-slate-950 flex aspect-square size-8 items-center justify-center rounded-lg shadow-md shrink-0">
+                <Building2 className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                <span className="truncate font-bold text-foreground">
+                  {activeWorkspace?.name || orgName}
+                </span>
+                <span className="truncate text-[10px] text-muted-foreground flex items-center gap-1">
+                  Active Workspace
+                </span>
+              </div>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

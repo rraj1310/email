@@ -4,8 +4,9 @@ import { getDashboardStats } from "@/app/actions/dashboard"
 import { getBirthdaySettings } from "@/app/actions/birthday"
 import { DashboardCards } from "@/components/dashboard/dashboard-cards"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Users, Mail, MousePointerClick, ShieldAlert, ArrowUpRight, TrendingUp, Sparkles, Activity, CalendarClock } from "lucide-react"
+import { Users, Mail, ShieldAlert, ArrowUpRight, TrendingUp, Sparkles, Activity } from "lucide-react"
 import { EngagementChart } from "@/components/analytics/engagement-chart"
+import { CampaignVolumeChart } from "@/components/analytics/campaign-volume-chart"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Suspense } from "react"
@@ -38,30 +39,30 @@ export default async function DashboardPage() {
     <div className="flex-1 space-y-4 p-4 md:p-6 w-full max-w-full overflow-hidden">
       
       {/* Live Stats Ticker Bar */}
-      <div className="w-full bg-slate-900 dark:bg-slate-950 text-slate-100 text-xs py-2 px-3 rounded-lg border border-slate-800 shadow-md flex items-center overflow-hidden gap-6 select-none animate-stagger-1">
+      <div className="w-full bg-[#080c0d]/90 dark:bg-[#050809]/90 backdrop-blur-md text-slate-100 text-xs py-2.5 px-4 rounded-xl border border-emerald-500/10 shadow-md flex items-center overflow-hidden gap-6 select-none animate-stagger-1">
         <div className="flex items-center gap-1.5 shrink-0 bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded text-[10px] animate-pulse">
-          LIVE
+          LIVE STATUS
         </div>
         <div className="flex gap-8 whitespace-nowrap overflow-x-auto scrollbar-none text-[11px] font-mono w-full">
           <span className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Contacts:</span> 
-            <span className="font-semibold">{stats.totalContacts}</span>
+            <span className="text-slate-400 font-medium font-sans">Contacts:</span> 
+            <span className="font-semibold text-emerald-400">{stats.totalContacts}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Emails Sent:</span> 
-            <span className="font-semibold">{stats.totalSent}</span>
+            <span className="text-slate-400 font-medium font-sans">Emails Sent:</span> 
+            <span className="font-semibold text-emerald-400">{stats.totalSent}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Open Rate:</span> 
-            <span className="font-semibold">{stats.openRate}%</span>
+            <span className="text-slate-400 font-medium font-sans">Open Rate:</span> 
+            <span className="font-semibold text-emerald-400">{stats.openRate}%</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Click Rate:</span> 
-            <span className="font-semibold">{stats.clickRate}%</span>
+            <span className="text-slate-400 font-medium font-sans">Click Rate:</span> 
+            <span className="font-semibold text-emerald-400">{stats.clickRate}%</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Suppressed:</span> 
-            <span className="font-semibold">{stats.totalSuppressed}</span>
+            <span className="text-slate-400 font-medium font-sans">Suppressed:</span> 
+            <span className="font-semibold text-rose-400">{stats.totalSuppressed}</span>
           </span>
         </div>
       </div>
@@ -69,17 +70,17 @@ export default async function DashboardPage() {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-stagger-2">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-emerald-400 bg-clip-text text-transparent">
             Dashboard
           </h2>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-sm mt-0.5">
             Monitor your email marketing performance at a glance.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/campaigns?create=true">
-            <Button className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-medium shadow-md transition-all active:scale-95 duration-150 cursor-pointer">
-              <Sparkles className="mr-2 h-4 w-4" />
+            <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold shadow-md shadow-emerald-500/10 transition-all active:scale-95 duration-150 cursor-pointer border-none h-9 px-4 rounded-lg text-xs">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5 fill-current" />
               New Campaign
             </Button>
           </Link>
@@ -109,12 +110,12 @@ export default async function DashboardPage() {
 
         {/* Total Sent */}
         <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-blue-500 to-indigo-500" />
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-teal-500 to-cyan-500" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
               Emails Sent
             </CardTitle>
-            <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-md">
+            <div className="p-1.5 bg-teal-500/10 text-teal-400 rounded-md">
               <Mail className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -128,12 +129,12 @@ export default async function DashboardPage() {
 
         {/* Avg Open Rate */}
         <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-purple-500" />
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-green-600" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
               Avg Open Rate
             </CardTitle>
-            <div className="p-1.5 bg-violet-500/10 text-violet-500 rounded-md">
+            <div className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-md">
               <TrendingUp className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -147,12 +148,12 @@ export default async function DashboardPage() {
 
         {/* Suppressed Contacts */}
         <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border bg-gradient-to-b from-card to-card/95 hover:scale-[1.01]">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-amber-500 to-orange-500" />
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-rose-500 to-orange-500" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
               Suppressed
             </CardTitle>
-            <div className="p-1.5 bg-amber-500/10 text-amber-500 rounded-md">
+            <div className="p-1.5 bg-rose-500/10 text-rose-500 rounded-md">
               <ShieldAlert className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -223,14 +224,10 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Suspense fallback={<AiInsightsPanelSkeleton />}>
-        <AiInsightsPanel />
-      </Suspense>
-
-      {/* Main Grid: Charts & Activities */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7 animate-stagger-4">
+      {/* Main Grid: Sleek Charts (Side-by-Side Area and Bar Graphs) */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 animate-stagger-4">
         {/* Engagement Overview Chart */}
-        <Card className="col-span-1 lg:col-span-4 shadow-sm border min-w-0 overflow-hidden">
+        <Card className="shadow-sm border min-w-0 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
               <CardTitle className="text-lg font-bold">Engagement Over Time</CardTitle>
@@ -247,6 +244,27 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Campaign Dispatch Volume Chart */}
+        <Card className="shadow-sm border min-w-0 overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div>
+              <CardTitle className="text-lg font-bold">Campaign Dispatch & Volume</CardTitle>
+              <CardDescription className="text-xs">Visualize total email volumes sent per campaign.</CardDescription>
+            </div>
+            <Link href="/reports">
+              <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1 hover:text-emerald-500 cursor-pointer">
+                View Reports <ArrowUpRight className="h-3 w-3" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <CampaignVolumeChart data={stats.chartData} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Grid: Activities & Insights */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7 animate-stagger-4">
         {/* Recent Activity Timeline */}
         <Card className="col-span-1 lg:col-span-3 shadow-sm border bg-card/60 backdrop-blur-xs">
           <CardHeader className="pb-4 border-b">
@@ -290,6 +308,13 @@ export default async function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Insights Panel */}
+        <div className="col-span-1 lg:col-span-4 min-w-0">
+          <Suspense fallback={<AiInsightsPanelSkeleton />}>
+            <AiInsightsPanel />
+          </Suspense>
+        </div>
       </div>
     </div>
   )

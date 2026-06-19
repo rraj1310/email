@@ -59,7 +59,14 @@ export async function getAutomations() {
       const exitRate = entered > 0 ? (exited / entered) * 100 : 0
 
       // Fetch linked campaign template data for inline editing
-      let templateConfig: { campaignId: string; subject: string; bodyText: string; bannerUrl: string } | null = null
+      let templateConfig: { 
+        campaignId: string; 
+        subject: string; 
+        bodyText: string; 
+        bannerUrl: string;
+        promoAttachmentUrl: string;
+        promoAttachmentName: string;
+      } | null = null
       if (campaignIds.length > 0) {
         const linkedCampaign = await prisma.campaign.findFirst({
           where: { id: campaignIds[0] },
@@ -78,7 +85,9 @@ export async function getAutomations() {
             campaignId: linkedCampaign.id,
             subject: parsed.subject || linkedCampaign.subject || "",
             bodyText: parsed.bodyText || "",
-            bannerUrl: parsed.bannerUrl || ""
+            bannerUrl: parsed.bannerUrl || "",
+            promoAttachmentUrl: parsed.promoAttachmentUrl || "",
+            promoAttachmentName: parsed.promoAttachmentName || "",
           }
         }
       }
@@ -125,9 +134,14 @@ function buildAutomationEmailHtml(
   bodyText: string,
   accentFrom: string,
   accentTo: string,
-  emoji: string
+  emoji: string,
+  bannerUrl?: string | null
 ) {
   const formattedBody = bodyText.replace(/\n/g, '<br />')
+  const containerStyle = bannerUrl
+    ? `background: url('${bannerUrl}') no-repeat center/cover;`
+    : `background: linear-gradient(135deg, ${accentFrom} 0%, ${accentTo} 100%);`
+
   return `<!DOCTYPE html>
 <html>
   <head>
@@ -137,67 +151,71 @@ function buildAutomationEmailHtml(
     <style>
       body {
         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background-color: #f8fafc;
+        background-color: #030706;
         margin: 0;
         padding: 0;
         -webkit-font-smoothing: antialiased;
       }
+      .wrapper {
+        width: 100%;
+        padding: 40px 0;
+        background-color: #030706;
+      }
       .container {
-        max-width: 600px;
-        margin: 40px auto;
-        background-color: #ffffff;
-        border-radius: 16px;
+        max-width: 540px;
+        margin: 0 auto;
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e2e8f0;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        ${containerStyle}
       }
-      .header-bar {
-        height: 100px;
-        background: linear-gradient(135deg, ${accentFrom} 0%, ${accentTo} 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .content {
-        padding: 40px 30px;
-      }
-      .title {
-        font-size: 24px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-top: 0;
-        margin-bottom: 20px;
+      .overlay-card {
+        background-color: rgba(6, 15, 13, 0.88);
+        border-radius: 16px;
+        margin: 40px 20px;
+        padding: 35px 25px;
+        border: 1px solid rgba(16, 185, 129, 0.15);
         text-align: center;
       }
+      .title {
+        font-size: 28px;
+        font-weight: 800;
+        color: #10b981;
+        margin-top: 0;
+        margin-bottom: 20px;
+        letter-spacing: -0.02em;
+        text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+      }
       .message {
-        font-size: 15px;
+        font-size: 16px;
         line-height: 1.8;
-        color: #334155;
-        margin-bottom: 30px;
+        color: #e2e8f0;
+        margin-bottom: 0;
       }
       .footer {
         padding: 20px;
-        background-color: #f8fafc;
-        border-top: 1px solid #e2e8f0;
         text-align: center;
-        font-size: 12px;
+        font-size: 11px;
         color: #64748b;
+        background-color: rgba(6, 15, 13, 0.95);
+        border-top: 1px solid rgba(16, 185, 129, 0.1);
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header-bar">
-        <span style="font-size: 42px;">${emoji}</span>
-      </div>
-      <div class="content">
-        <h1 class="title">${subject}</h1>
-        <div class="message">
-          ${formattedBody}
+    <div class="wrapper">
+      <div class="container">
+        <div class="overlay-card">
+          <div style="font-size: 48px; margin-bottom: 15px;">${emoji}</div>
+          <h1 class="title">${subject}</h1>
+          <div class="message">
+            ${formattedBody}
+          </div>
         </div>
-      </div>
-      <div class="footer">
-        © ${new Date().getFullYear()} Your Workspace. All rights reserved.
+        <div class="footer">
+          © ${new Date().getFullYear()} Workspace Automations. All rights reserved.
+        </div>
       </div>
     </div>
   </body>
@@ -361,7 +379,9 @@ export async function createAutomation(name: string, triggerType: string) {
         campaignId: campaign.id,
         subject: tpl.subject,
         bodyText: tpl.bodyText,
-        bannerUrl: ""
+        bannerUrl: "",
+        promoAttachmentUrl: "",
+        promoAttachmentName: "",
       },
       metrics: {
         entered: 0,
@@ -471,7 +491,9 @@ export async function saveAutomationTemplate(
   bannerUrl: string | null,
   enabled: boolean,
   sendDate?: string | null,
-  sendTime?: string | null
+  sendTime?: string | null,
+  promoAttachmentUrl?: string | null,
+  promoAttachmentName?: string | null
 ) {
   try {
     const { organizationId } = await enforceWorkspaceEditor()
@@ -501,7 +523,8 @@ export async function saveAutomationTemplate(
       bodyText,
       tpl.accentFrom,
       tpl.accentTo,
-      tpl.emoji
+      tpl.emoji,
+      bannerUrl
     )
 
     // 4. Update the campaign template
@@ -510,7 +533,13 @@ export async function saveAutomationTemplate(
       data: {
         subject,
         htmlContent,
-        designContent: { subject, bodyText, bannerUrl: bannerUrl || "" } as any
+        designContent: { 
+          subject, 
+          bodyText, 
+          bannerUrl: bannerUrl || "",
+          promoAttachmentUrl: promoAttachmentUrl || "",
+          promoAttachmentName: promoAttachmentName || "",
+        } as any
       }
     })
 
@@ -539,7 +568,9 @@ export async function saveAutomationTemplate(
         campaignId,
         subject,
         bodyText,
-        bannerUrl: bannerUrl || ""
+        bannerUrl: bannerUrl || "",
+        promoAttachmentUrl: promoAttachmentUrl || "",
+        promoAttachmentName: promoAttachmentName || "",
       }
     }
 

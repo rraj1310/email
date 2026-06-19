@@ -1,6 +1,7 @@
 import { inngest } from "./client"
 import { db } from "@/lib/db"
 import { runBirthdayCheckForOrg } from "@/app/actions/birthday"
+import { personalizeHtml } from "@/lib/email"
 
 // 1. Bulk CSV Import background task
 export const csvImport = inngest.createFunction(
@@ -181,12 +182,25 @@ export const campaignDispatch = inngest.createFunction(
       let sentCount = 0
       let bounceCount = 0
 
+      let emailAttachments: Array<{ filename: string; path: string }> = []
+      if (campaign.designContent) {
+        try {
+          const design = typeof campaign.designContent === "string"
+            ? JSON.parse(campaign.designContent)
+            : campaign.designContent
+          if (design && design.promoAttachmentUrl) {
+            emailAttachments.push({
+              filename: design.promoAttachmentName || "attachment",
+              path: design.promoAttachmentUrl,
+            })
+          }
+        } catch (err) {
+          console.error("Failed to parse campaign attachments:", err)
+        }
+      }
+
       for (const contact of contacts) {
-        let html = campaign.htmlContent || ""
-        // Simple personalization replacements
-        html = html.replace(/\{\{\s*firstName\s*\}\}/g, contact.firstName || "")
-        html = html.replace(/\{\{\s*lastName\s*\}\}/g, contact.lastName || "")
-        html = html.replace(/\{\{\s*email\s*\}\}/g, contact.email)
+        const html = personalizeHtml(campaign.htmlContent || "", contact)
 
         try {
           const fromField = campaign.organization?.customDomain
@@ -197,7 +211,8 @@ export const campaignDispatch = inngest.createFunction(
             to: contact.email,
             subject: campaign.subject || "No Subject",
             html,
-            from: fromField
+            from: fromField,
+            attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
           })
 
           if (res.success && res.provider !== "SIMULATOR") {

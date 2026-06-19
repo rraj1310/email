@@ -4,7 +4,7 @@ import { db as prisma } from "@/lib/db"
 import { logActivity } from "./dashboard"
 import { getActiveWorkspaceContext, enforceWorkspaceEditor, handleActionError } from "@/lib/tenant"
 import { inngest } from "@/inngest/client"
-import { sendMail } from "@/lib/email"
+import { sendMail, personalizeHtml } from "@/lib/email"
 
 export async function getCampaigns() {
   try {
@@ -266,19 +266,35 @@ export async function dispatchCampaignAction({
     let bounceCount = 0
     let lastError = ""
 
+    // Parse design content to extract optional attachments
+    let emailAttachments: Array<{ filename: string; path: string }> = []
+    if (campaign.designContent) {
+      try {
+        const design = typeof campaign.designContent === "string" 
+          ? JSON.parse(campaign.designContent) 
+          : campaign.designContent
+        if (design && design.promoAttachmentUrl) {
+          emailAttachments.push({
+            filename: design.promoAttachmentName || "attachment",
+            path: design.promoAttachmentUrl,
+          })
+        }
+      } catch (err) {
+        console.error("Failed to parse campaign attachments:", err)
+      }
+    }
+
     // Send emails
     for (const target of targets) {
-      let html = campaign.htmlContent || ""
-      if (target.firstName) html = html.replace(/\{\{\s*firstName\s*\}\}/g, target.firstName)
-      if (target.lastName) html = html.replace(/\{\{\s*lastName\s*\}\}/g, target.lastName)
-      html = html.replace(/\{\{\s*email\s*\}\}/g, target.email)
+      const html = personalizeHtml(campaign.htmlContent || "", target)
 
       try {
         const res = await sendMail({
           to: target.email,
           subject: campaign.subject || "Newsletter",
           html,
-          from: fromField
+          from: fromField,
+          attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
         })
 
         if (res.success) {
@@ -303,9 +319,7 @@ export async function dispatchCampaignAction({
         console.error(`Failed to send email to ${target.email}:`, errMsg)
         lastError = errMsg
         bounceCount++
-
-        // If the very first email fails with a config/auth error, abort immediately
-        // so the user gets a clear error instead of "sent to 0 recipients"
+        
         if (sentCount === 0 && bounceCount === 1) {
           if (errMsg.includes("SMTP credentials") || errMsg.includes("SMTP delivery failed") || errMsg.includes("Invalid login") || errMsg.includes("authentication")) {
             return { success: false, error: `Email delivery failed: ${errMsg}` }
@@ -314,7 +328,7 @@ export async function dispatchCampaignAction({
       }
     }
 
-    // Update campaign status and counts (if it's not a test send, or if we want to mark it completed)
+    // Update campaign status and counts
     const openCount = Math.floor(sentCount * 0.22)
     const clickCount = Math.floor(openCount * 0.35)
 
@@ -338,6 +352,57 @@ export async function dispatchCampaignAction({
     return { success: true, sentCount }
   } catch (error) {
     return handleActionError(error, "Failed to dispatch campaign.")
+  }
+}
+
+
+
+// Action to save campaign details along with optional cover banner and file attachment settings
+export async function saveCampaignTemplateSettings(
+  id: string,
+  subject: string,
+  previewText: string,
+  bannerUrl: string | null,
+  promoAttachmentUrl: string | null,
+  promoAttachmentName: string | null
+) {
+  try {
+    const { organizationId } = await enforceWorkspaceEditor()
+
+    const existing = await prisma.campaign.findFirst({
+      where: { id, organizationId }
+    })
+    if (!existing) return { success: false, error: "Campaign not found" }
+
+    const currentDesign = existing.designContent
+      ? (typeof existing.designContent === "string" 
+          ? JSON.parse(existing.designContent) 
+          : existing.designContent)
+      : {}
+
+    const updatedDesign = {
+      ...currentDesign,
+      subject,
+      previewText,
+      bannerUrl: bannerUrl || "",
+      promoAttachmentUrl: promoAttachmentUrl || "",
+      promoAttachmentName: promoAttachmentName || "",
+    }
+
+    const campaign = await prisma.campaign.update({
+      where: { id },
+      data: {
+        subject,
+        previewText,
+        designContent: updatedDesign as any,
+      }
+    })
+
+    await logActivity(`Updated template settings for "${campaign.name}"`, "CAMPAIGN", id)
+
+    return { success: true, data: campaign }
+  } catch (error) {
+    return handleActionError(error, "Failed to update campaign template settings")
   }
 }
 
